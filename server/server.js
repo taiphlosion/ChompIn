@@ -1,10 +1,18 @@
 const express = require('express');
 const pool = require('./db');
 const cors = require('cors');
+const cookieParser = require("cookie-parser");
 
 const app = express();
-app.use(cors());
+
+// Middleware
+app.use(cors({ credentials: true, origin: "http://localhost:8081" }));
 app.use(express.json());
+app.use(cookieParser()); 
+
+// Routes
+const authRoutes = require('./authRoutes');
+app.use('/api/auth', authRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'Hello from the backend!' });

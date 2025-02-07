@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet } from "react-native";
 import { useNavigation } from '@react-navigation/native';
+import { RootStackParamList } from '../types/types';
+import { StackNavigationProp } from '@react-navigation/stack';
+
+// Define the navigation prop type for the Login screen
+type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
 
 export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const navigation = useNavigation();
+    const navigation = useNavigation<LoginScreenNavigationProp>();
     
     const handleLogin = () => {
         //API call here

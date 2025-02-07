@@ -4,6 +4,7 @@ import { View, Text, StyleSheet } from "react-native";
 export default function Home() {
     return (
         <View style={styles.container}>
+            {/* First and last name from response */}
             <Text style={styles.title}>Welcome to the Home Screen</Text>
         </View>
     );

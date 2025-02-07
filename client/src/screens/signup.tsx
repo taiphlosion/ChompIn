@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet } from "react-native";
 import { useNavigation } from '@react-navigation/native';
+import { RootStackParamList } from '../types/types';
+import { StackNavigationProp } from '@react-navigation/stack';
+
+type SignupScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Signup'>;
 
 export default function Signup() {
     const [firstName, setFirstName] = useState('');
@@ -10,7 +14,7 @@ export default function Signup() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [role, setRole] = useState('');
 
-    const navigation = useNavigation();
+    const navigation = useNavigation<SignupScreenNavigationProp>();
     
     const handleSignUp = () => {
         //API call here

@@ -2,6 +2,8 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('./db');
+const { verifyToken } = require("./authMiddleware"); // Import middleware
+
 require('dotenv').config();
 
 
@@ -66,29 +68,19 @@ router.post('/login', async (req, res) => {
 });
 
 // **Get Current User (Protected Route)**
-router.get('/me', async (req, res) => {
-    // Get token from request headers
-    const token = req.cookies.token;
-
-    if (!token) {
-        return res.status(401).json({ message: 'Unauthorized: No token provided' });
-    }
-
+router.get("/me", verifyToken, async (req, res) => {
     try {
-        // Verify token
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-        // Fetch user from DB
-        const user = await pool.query('SELECT id, email, role FROM users WHERE id = $1', [decoded.userId]);
+        // Fetch user from DB using `req.user.userId` (set by middleware)
+        const user = await pool.query("SELECT id, email, role FROM users WHERE id = $1", [req.user.userId]);
 
         if (user.rows.length === 0) {
-            return res.status(404).json({ message: 'User not found' });
+            return res.status(404).json({ message: "User not found" });
         }
 
-        res.json(user.rows[0]);
+        res.json(user.rows[0]); 
     } catch (err) {
-        console.error('Token verification error:', err);
-        res.status(401).json({ message: 'Unauthorized: Invalid token' });
+        console.error("Database error:", err);
+        res.status(500).json({ message: "Internal Server Error" });
     }
 });
 
@@ -102,5 +94,11 @@ router.post("/logout", (req, res) => {
     res.json({ message: "Logged out successfully" });
 });
 
+
+// example role protected route
+// 🔒 Only professors can access this route
+// router.get("/information only a professor can access", verifyToken, authorizeRoles("professor"), (req, res) => {
+//     res.json({ message: "Welcome to the Professor Dashboard" });
+// });
 
 module.exports = router;

@@ -12,15 +12,35 @@ export default function Login() {
     const [password, setPassword] = useState('');
     const navigation = useNavigation<LoginScreenNavigationProp>();
     
-    const handleLogin = () => {
-        //API call here
-        console.log('Form submitted', {email, password});
-        //On success, navigate to home screen
-        navigation.navigate('Home');
-        navigation.reset({
-            index: 0, // The first screen in the stack
-            routes: [{ name: 'Home' }], // The route you want to go to (Home screen)
-        });
+    const handleLogin = async () => {
+        try {
+            const response = await fetch('http://localhost:5000/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password }),
+            });
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message);
+            }
+            console.log('Success:', data);
+
+            navigation.navigate('Home');
+            navigation.reset({
+                index: 0, // The first screen in the stack
+                routes: [{ name: 'Home' }], // The route you want to go to (Home screen)
+            });
+        }
+        catch (error) {
+            if (error instanceof Error) {
+                console.error("Login error:", error.message);
+            } else {
+                console.error("Login error:", error);
+            }
+        }
     };
 
     const navigateToRegister = () => {

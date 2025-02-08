@@ -61,7 +61,7 @@ router.post('/login', async (req, res) => {
             maxAge: 7 * 24 * 60 * 60 * 1000
         });
 
-        res.json({ token, user: { id: user.rows[0].id, email: user.rows[0].email, role: user.rows[0].role } });
+        res.json({ token, user: { id: user.rows[0].id, email: user.rows[0].email, role: user.rows[0].role, first_name: user.rows[0].first_name, last_name: user.rows[0].last_name } });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

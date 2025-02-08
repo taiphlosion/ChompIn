@@ -5,7 +5,7 @@ import RadioGroup from 'react-native-radio-buttons-group';
 import { RootStackParamList } from '../types/types';
 import { StackNavigationProp } from '@react-navigation/stack';
 
-type SignupScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Signup'>;
+type signupScreenNavigationProp = StackNavigationProp<RootStackParamList, 'signup'>;
 
 export default function Signup() {
     const [firstName, setFirstName] = useState('');
@@ -77,7 +77,7 @@ export default function Signup() {
         return valid;        
     };
 
-    const navigation = useNavigation<SignupScreenNavigationProp>();
+    const navigation = useNavigation<signupScreenNavigationProp>();
     
     const handleSignUp = async () => {
         if (!validateInputs()) {
@@ -105,10 +105,10 @@ export default function Signup() {
             if (response.ok) {
                 console.log('Signup success:', data);
 
-                navigation.navigate('Login');
+                navigation.navigate('login');
                 navigation.reset({
                     index: 0, // The first screen in the stack
-                    routes: [{ name: 'Login' }], // The route you want to go to (Login screen)
+                    routes: [{ name: 'login' }], // The route you want to go to (Login screen)
                 });
             }
             else {
@@ -125,7 +125,7 @@ export default function Signup() {
     };
 
     const navigateToRegister = () => {
-        navigation.navigate('Signup');
+        navigation.navigate('signup');
     };
 
     return (

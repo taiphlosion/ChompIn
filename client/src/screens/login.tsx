@@ -3,14 +3,17 @@ import { View, Text, TextInput, Button, StyleSheet } from "react-native";
 import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../types/types';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { useUserContext } from '@/context/user';
+
 
 // Define the navigation prop type for the Login screen
-type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
+type loginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'login'>;
 
 export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const navigation = useNavigation<LoginScreenNavigationProp>();
+    const navigation = useNavigation<loginScreenNavigationProp>();
+    const { setUser } = useUserContext();
     
     const handleLogin = async () => {
         try {
@@ -28,10 +31,12 @@ export default function Login() {
             }
             console.log('Success:', data);
 
-            navigation.navigate('Home');
-            navigation.reset({
-                index: 0, // The first screen in the stack
-                routes: [{ name: 'Home' }], // The route you want to go to (Home screen)
+            setUser({
+                id: data.user.id,
+                email: data.user.email,
+                first_name: data.user.first_name,
+                last_name: data.user.last_name,
+                role: data.user.role,
             });
         }
         catch (error) {
@@ -44,7 +49,7 @@ export default function Login() {
     };
 
     const navigateToRegister = () => {
-        navigation.navigate('Signup');
+        navigation.navigate('signup');
     };
 
     return (

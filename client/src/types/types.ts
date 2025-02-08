@@ -15,8 +15,8 @@ export interface User {
   
   /** Add your navigation types */
   export type RootStackParamList = {
-    Login: undefined;
-    Signup: undefined;
-    Home: undefined;
+    login: undefined;
+    signup: undefined;
+    home: undefined;
   };
   

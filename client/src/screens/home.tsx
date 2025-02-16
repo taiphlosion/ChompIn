@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, Button } from "react-native";
 import { useUserContext } from "@/context/user";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import { RootStackParamList } from "@/types/types"; 
+import Topbar from '@/components/topbar';
+import { ScrollView } from "react-native-gesture-handler";
 
 export default function Home() {
     const { setUser } = useUserContext();
@@ -28,12 +30,13 @@ export default function Home() {
 
     return (
         <View style={styles.container}>
-            {/* First and last name from response */}
-            <Text style={styles.title}>
-                Welcome, {user?.first_name} {user?.last_name}
-            </Text>
-            {/* Logout Button */}
-            <Button title="Logout" onPress={handleLogout} />
+            <Topbar />
+            <ScrollView contentContainerStyle={styles.contentContainer}>
+                <Text style={styles.title}>
+                    Welcome, {user?.first_name} {user?.last_name}
+                </Text>
+                <Button title="Logout" onPress={handleLogout} />
+            </ScrollView>
         </View>
     );
 }
@@ -41,9 +44,13 @@ export default function Home() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: '#f8f9fa',
+    },
+    contentContainer: {
+        flexGrow: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(255, 174, 66, 0.89)',
+        paddingTop: 80,
     },
     title: {
         fontSize: 24,

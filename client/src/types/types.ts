@@ -18,5 +18,9 @@ export interface User {
     login: undefined;
     signup: undefined;
     home: undefined;
+    scan: undefined;
+    class: undefined;
+    leaderboard: undefined;
+    setting: undefined;
   };
   

@@ -1,9 +1,9 @@
 import React from "react";
-import { View, Text, StyleSheet, Image, Dimensions, TouchableOpacity } from "react-native";
+import { View, StyleSheet, Image, Dimensions, TouchableOpacity } from "react-native";
 
 const { height } = Dimensions.get("window");
 
-const Topbar = () => {
+export default function Topbar() {
     return (
         <View style={styles.topbar}>
             <Image 
@@ -30,7 +30,7 @@ const styles = StyleSheet.create({
         position: "absolute",       
         top: 0,                    
         left: 0,                   
-        elevation: 4,              // Optional: adds shadow for iOS and Android
+        elevation: 4,      
         zIndex: 1000,              
     },
     title: {
@@ -42,5 +42,3 @@ const styles = StyleSheet.create({
         padding: 10,
     }
 });
-
-export default Topbar;

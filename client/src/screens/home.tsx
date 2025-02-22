@@ -1,10 +1,12 @@
 import React from "react";
-import { View, Text, StyleSheet, Button } from "react-native";
+import { View, Text, StyleSheet, Dimensions } from "react-native";
 import { useUserContext } from "@/context/user";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import { RootStackParamList } from "@/types/types"; 
 import Topbar from '@/components/topbar';
 import { ScrollView } from "react-native-gesture-handler";
+import ChompIn from '@/components/chomp-in';
+import Navbar from '@/components/navbar';
 
 export default function Home() {
     const { setUser } = useUserContext();
@@ -27,6 +29,10 @@ export default function Home() {
         }
     };
 
+    const handleChompInPress = () => {
+        navigation.navigate("scan");
+    };
+
 
     return (
         <View style={styles.container}>
@@ -35,7 +41,10 @@ export default function Home() {
                 <Text style={styles.title}>
                     Welcome, {user?.first_name} {user?.last_name}
                 </Text>
-                <Button title="Logout" onPress={handleLogout} />
+                {/* Takes you to the scan screen */}
+                <ChompIn title="Chomp-In?" onPress={handleChompInPress} />
+
+                <Navbar navigation={navigation} />
             </ScrollView>
         </View>
     );

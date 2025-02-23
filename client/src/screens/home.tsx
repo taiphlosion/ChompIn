@@ -44,8 +44,8 @@ export default function Home() {
                 {/* Takes you to the scan screen */}
                 <ChompIn title="Chomp-In?" onPress={handleChompInPress} />
 
-                <Navbar navigation={navigation} />
             </ScrollView>
+            <Navbar navigation={navigation} />
         </View>
     );
 }

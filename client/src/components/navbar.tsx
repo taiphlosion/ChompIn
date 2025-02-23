@@ -9,6 +9,7 @@ import { NavigationProp } from "@react-navigation/native";
 import { RootStackParamList } from "@/types/types";
 
 const screenHeight = Dimensions.get('window').height;
+const screenWidth = Dimensions.get('window').width;
 
 interface NavbarProps {
     navigation: NavigationProp<RootStackParamList>;
@@ -48,7 +49,9 @@ const styles = StyleSheet.create({
         backgroundColor: "#D9D9D9",
         borderRadius: 84,
         width: "94%",
-        top : screenHeight * 0.91,
+        top : screenHeight * 0.85,
+        left: "50%",
+        transform: [{ translateX: -screenWidth * 0.47 }, { translateY: -screenHeight * 0.035 }],
         alignItems: "center",
         height: screenHeight * 0.07,
     },

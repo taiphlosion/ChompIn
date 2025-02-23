@@ -4,6 +4,9 @@ import { useNavigation } from '@react-navigation/native';
 import RadioGroup from 'react-native-radio-buttons-group';
 import { RootStackParamList } from '../types/types';
 import { StackNavigationProp } from '@react-navigation/stack';
+import Constants from 'expo-constants';
+
+const API_URL = Constants.expoConfig?.extra?.API_URL || "http://localhost:5000";
 
 type signupScreenNavigationProp = StackNavigationProp<RootStackParamList, 'signup'>;
 
@@ -86,7 +89,7 @@ export default function Signup() {
 
         //REGISTER USER
         try{
-            const response = await fetch('http://localhost:5000/api/auth/register', {
+            const response = await fetch(`${API_URL}/api/auth/register`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

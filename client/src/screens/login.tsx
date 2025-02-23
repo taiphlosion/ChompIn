@@ -4,6 +4,9 @@ import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../types/types';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useUserContext } from '@/context/user';
+import Constants from 'expo-constants';
+
+const API_URL = Constants.expoConfig?.extra?.API_URL || "http://localhost:5000";
 
 
 // Define the navigation prop type for the Login screen
@@ -17,7 +20,7 @@ export default function Login() {
     
     const handleLogin = async () => {
         try {
-            const response = await fetch('http://localhost:5000/api/auth/login', {
+            const response = await fetch(`${API_URL}/api/auth/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

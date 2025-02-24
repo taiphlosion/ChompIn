@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
-// Middleware to verify user authentication
+// Middleware to verify user authentication AKA user is logged in.
 function verifyToken(req, res, next) {
   const token = req.cookies.token; // Get token from HTTP-only cookie
 

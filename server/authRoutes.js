@@ -52,7 +52,7 @@ router.post("/login", async (req, res) => {
     }
 
     const token = jwt.sign(
-      { userId: user.rows[0].id, role: user.rows[0].role },
+      { id: user.rows[0].id, role: user.rows[0].role },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
@@ -81,10 +81,10 @@ router.post("/login", async (req, res) => {
 // **Get Current User (Protected Route)**
 router.get("/me", verifyToken, async (req, res) => {
   try {
-    // Fetch user from DB using `req.user.userId` (set by middleware)
+    // Fetch user from DB using `req.user.id` (set by middleware)
     const user = await pool.query(
       "SELECT id, email, role FROM users WHERE id = $1",
-      [req.user.userId]
+      [req.user.id]
     );
 
     if (user.rows.length === 0) {

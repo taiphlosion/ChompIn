@@ -14,6 +14,9 @@ app.use(cookieParser());
 const authRoutes = require("./authRoutes");
 app.use("/api/auth", authRoutes);
 
+const userRoutes = require("./userRoutes");
+app.use("/api/user/", userRoutes);
+
 app.get("/", (req, res) => {
   res.json({ message: "Hello from the backend!" });
 });

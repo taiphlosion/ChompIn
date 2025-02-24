@@ -35,6 +35,7 @@ router.post("/register", async (req, res) => {
 });
 
 // Log in
+
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
@@ -44,6 +45,7 @@ router.post("/login", async (req, res) => {
     ]);
     if (user.rows.length === 0) {
       return res.status(400).json({ message: "Invalid email or password" });
+
     }
 
     const isMatch = await bcrypt.compare(password, user.rows[0].password_hash);
@@ -109,7 +111,6 @@ router.post("/logout", (req, res) => {
 });
 
 // example role protected route
-// 🔒 Only professors can access this route
 // router.get("/information only a professor can access", verifyToken, authorizeRoles("professor"), (req, res) => {
 //     res.json({ message: "Welcome to the Professor Dashboard" });
 // });

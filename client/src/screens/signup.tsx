@@ -143,7 +143,8 @@ export default function Signup() {
                     placeholder="First Name"
                     placeholderTextColor={'gray'}
                 />
-                {errors.firstName && <Text style={styles.errorText}>{errors.firstName}</Text>} {/* First name error */}
+                {/* First name error */}
+                {errors.firstName ? <Text style={styles.errorText}>{String(errors.firstName)}</Text> : null} 
 
                 {/* Last name input */}
                 <TextInput
@@ -153,7 +154,8 @@ export default function Signup() {
                     placeholder="Last Name"
                     placeholderTextColor={'gray'}
                 />
-                {errors.lastName && <Text style={styles.errorText}>{errors.lastName}</Text>} {/* Last name error */}
+                {/* Last name error */}
+                {errors.lastName ? <Text style={styles.errorText}>{String(errors.lastName)}</Text> : null} 
 
                 {/* Email input */}
                 <TextInput
@@ -163,7 +165,7 @@ export default function Signup() {
                     placeholder="Email"
                     placeholderTextColor={'gray'}
                 />
-                {errors.email && <Text style={styles.errorText}>{errors.email}</Text>} {/* Email error */}
+                {errors.email ? <Text style={styles.errorText}>{String(errors.email)}</Text> : null}
 
                 {/* Password input */}
                 <TextInput
@@ -174,7 +176,7 @@ export default function Signup() {
                     placeholderTextColor={'gray'}
                     secureTextEntry={true}
                 />
-                {errors.password && <Text style={styles.errorText}>{errors.password}</Text>} {/* Password error */}
+                {errors.password ? <Text style={styles.errorText}>{String(errors.password)}</Text> : null}
                 
                 {/* Confirm password input */}
                 <TextInput
@@ -185,15 +187,16 @@ export default function Signup() {
                     placeholderTextColor={'gray'}
                     secureTextEntry={true}
                 />
-                {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>} {/* Confirm password error */}
+                {errors.confirmPassword ? <Text style={styles.errorText}>{String(errors.confirmPassword)}</Text> : null}
 
                 {/* Account type selection*/}
                 <RadioGroup 
                     radioButtons={roles} 
-                    onPress={(selectedId) => setRole(roles.find(r => r.id === String(selectedId))?.value || '')}
+                    onPress={(selectedId) => setRole(roles.find(r => r.id === selectedId)?.value || '')}
                     selectedId={roles.find(r => r.value === role)?.id} 
+                    containerStyle={{ alignItems: 'flex-start' }} 
                 />
-                {errors.role && <Text style={styles.errorText}>{errors.role}</Text>} {/* Role error */}
+                {errors.role ? <Text style={styles.errorText}>{String(errors.role)}</Text> : null}
 
                 {/* Submit button */}
                 <Button title="Submit" onPress={handleSignUp} />

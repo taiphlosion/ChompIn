@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, Dimensions } from "react-native";
+import { View, Text, StyleSheet, Button } from "react-native";
 import { useUserContext } from "@/context/user";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import { RootStackParamList } from "@/types/types"; 
@@ -43,6 +43,8 @@ export default function Home() {
                 </Text>
                 {/* Takes you to the scan screen */}
                 <ChompIn title="Chomp-In?" onPress={handleChompInPress} />
+
+                <Button title="Logout" onPress={handleLogout} />
 
             </ScrollView>
             <Navbar navigation={navigation} />

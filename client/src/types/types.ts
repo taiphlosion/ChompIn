@@ -18,7 +18,7 @@ export interface User {
     login: undefined;
     signup: undefined;
     home: undefined;
-    scan: undefined;
+    scan: {qrCode: string};
     class: undefined;
     leaderboard: undefined;
     setting: undefined;

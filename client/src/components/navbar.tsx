@@ -23,7 +23,7 @@ export default function Navbar({ navigation }: NavbarProps) {
                 <Image source={require("../assets/images/home/home.png")} style={styles.icon} />
             </TouchableOpacity>
             {/* Scan */}
-            <TouchableOpacity onPress={() => navigation.navigate("scan")}>
+            <TouchableOpacity onPress={() => navigation.navigate("scan", { qrCode: "" })}>
                 <Image source={require("../assets/images/home/qrcode.png")} style={styles.icon} />
             </TouchableOpacity>
             {/* Classes */}

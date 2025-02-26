@@ -6,16 +6,15 @@ import { RootStackParamList } from "@/types/types";
 import { Camera, CameraType, useCameraPermissions, CameraView } from 'expo-camera';
 import Topbar from '@/components/topbar';
 import Navbar from '@/components/navbar';
+import QRCode from 'react-native-qrcode-svg';
 
 export default function CameraScreen() {
+    const { user } = useUserContext();
     const [facing, setFacing] = useState<CameraType>('back');
     const [permission, requestPermission] = useCameraPermissions();
-    const [cameraRef, setCameraRef] = useState<any>(null);
 
     // Check if the permission is null (initial state)
-    if (permission === null) {
-        return <View />;
-    }
+    if (permission === null) { return <View />; }
 
     // If permission is not granted, show a button to request permission
     if (!permission.granted) {
@@ -26,10 +25,7 @@ export default function CameraScreen() {
         );
     }
 
-    // Toggle camera facing (front/back)
-    function toggleCameraFacing() {
-        setFacing(current => current === 'back' ? 'front' : 'back');
-    }
+    function toggleCameraFacing() { setFacing(current => current === 'back' ? 'front' : 'back'); }
 
     function handleSnap() {
         // This can be turned into QR code scanning logic here
@@ -38,8 +34,21 @@ export default function CameraScreen() {
 
     const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
-    return (
-        <View style={styles.container}>
+    const renderProfessorView = () => {
+        return(
+            <View style={styles.container}>
+                <Topbar />
+                <Text style={styles.text}>Have your students scan this</Text>
+                {/* Do an API call here to get QR code content */}
+                <QRCode value="Your QR Code Content Here" size={200} />
+                <Navbar navigation={navigation} />
+            </View>
+        );
+    };
+
+    const renderStudentView = () => {
+        return(
+            <View style={styles.container}>
             <Topbar />
             <CameraView style={styles.camera} facing={facing} />
 
@@ -54,7 +63,11 @@ export default function CameraScreen() {
 
             <Navbar navigation={navigation} />
         </View>
-    );
+        );
+    };
+
+    if (user?.role === "professor") { return renderProfessorView(); }
+    return renderStudentView();
 }
 
 const styles = StyleSheet.create({

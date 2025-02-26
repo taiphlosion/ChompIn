@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { View, Text, StyleSheet, Button } from "react-native";
 import { useUserContext } from "@/context/user";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
@@ -17,26 +17,42 @@ export default function Home() {
     const { user } = useUserContext();
     const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
+    const [classes, setClasses] = React.useState<{ class_name: string }[]>([]);
+    const [students, setStudents] = React.useState([]);
+
     const handleLogout = async () => {
         setUser(null);
-
         try{
             await fetch(`${API_URL}/api/auth/logout`, {
                 method: 'POST',
                 credentials: 'include',
             });
             console.log("Logout successful");
-
             navigation.navigate("login");
         }
-        catch(error){
-            console.log(error);
-        }
+        catch(error){ console.log(error); }
     };
 
-    const handleChompInPress = () => {
-        navigation.navigate("scan");
+    const classList = async () => {
+        try {
+            const response = await fetch(`${API_URL}/api/user/classrooms`, {
+                method: 'GET',
+                credentials: 'include',
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setClasses(data);
+                console.log(data);
+            }
+        } catch (error) { console.log(error); }
     };
+
+    //TODO: Run a different function to get the API call for all classes involved with students. 
+    useEffect(() => {
+        if (user?.role === "professor") { classList(); }
+    }, []);
+
+    const handleChompInPress = () => { navigation.navigate("scan"); };
 
     const renderProfessorView = () => {
         console.log("Rendering professor view");
@@ -50,8 +66,16 @@ export default function Home() {
                     <QRCreation title="Create QR Code" onPress={() => navigation.navigate("scan")} />
                     <Text style={styles.subtitle}>
                         Your classes:
-                        {/* Have the result of the returned API call for user context returned here.  */}
                     </Text>
+                    {classes.length > 0 ? (
+                        classes.map((classItem, index) => (
+                            <Text key={index} style={styles.subtitle}>
+                                {classItem.class_name}
+                            </Text>
+                        ))
+                    ) : (
+                        <Text>No classes found</Text>
+                    )}
                     <Text style={styles.subtitle}>
                         Your students:
                         {/* Have the result of the returned API call for user context returned here.  */}

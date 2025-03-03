@@ -1,10 +1,11 @@
 import React, { useEffect } from "react";
-import { View, Text, StyleSheet, Button, Modal, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, Button } from "react-native";
 import { useUserContext } from "@/context/user";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import { RootStackParamList } from "@/types/types"; 
-import Topbar from '@/components/topbar';
 import { ScrollView } from "react-native-gesture-handler";
+import { SelectList } from 'react-native-dropdown-select-list';
+import Topbar from '@/components/topbar';
 import ChompIn from '@/components/student/chomp-in';
 import QRCreation from "@/components/professor/qr-creation";
 import Navbar from '@/components/navbar';
@@ -13,14 +14,11 @@ import Constants from 'expo-constants';
 const API_URL = Constants.expoConfig?.extra?.API_URL || "http://localhost:5000";
 
 export default function Home() {
-    const { setUser } = useUserContext();
     const { user } = useUserContext();
     const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
     const [classes, setClasses] = React.useState<{ class_name: string, id: number, professor_id: number }[]>([]);
-    const [students, setStudents] = React.useState([]);
     const [selectedClass, setSelectedClass] = React.useState<{ class_name: string, id: number, professor_id: number } | null>(null);
-    const [isModalVisible, setIsModalVisible] = React.useState(false);
 
     const classList = async () => {
         try {
@@ -36,14 +34,22 @@ export default function Home() {
         } catch (error) { console.log(error); }
     };
 
+    const classOptions = classes.map(cls => ({
+        key: cls.id.toString(),
+        value: cls.class_name,
+    }));
+
     //TODO: Run a different function to get the API call for all classes involved with students. 
     useEffect(() => { if (user?.role === "professor") { classList(); } }, []);
 
+    //TODO: Wait for Mauricio to fix to POST to test out
     const handleQRCreation = async () => {
-        if (!selectedClass) { 
-            setIsModalVisible(true);
+        if (!selectedClass?.id) { 
             return; 
         }
+
+        const classId = selectedClass.id;
+
         try {
             const response = await fetch(`${API_URL}/api/user/generate-qr`, {
                 method: 'GET',
@@ -72,48 +78,17 @@ export default function Home() {
                     <Text style={styles.title}>
                         Welcome, {user?.first_name} {user?.last_name}
                     </Text>
+
+                    <SelectList
+                        setSelected={(val: string) => {
+                            const selectedClass = classes.find(cls => cls.class_name === val);
+                            setSelectedClass(selectedClass || null);
+                        }}
+                        data={[{ key: '0', value: 'Select a class to generate a QR code', disabled: true }, ...classOptions]}
+                        save="value"
+                    />
+
                     <Button title="Create QR Code" onPress={handleQRCreation} />
-                    <Text style={styles.subtitle}>
-                        Your classes:
-                    </Text>
-                    {classes.length > 0 ? (
-                        classes.map((classItem, index) => (
-                            <Text key={index} style={styles.subtitle}>
-                                {classItem.class_name}
-                            </Text>
-                        ))
-                    ) : (
-                        <Text>No classes found</Text>
-                    )}
-
-                    <Modal visible={isModalVisible} transparent={true} animationType="slide">
-                        <View style={styles.modalContainer}>
-                            <View style={styles.modalContent}>
-                                <Text>Select a class:</Text>
-                                {classes.length > 0 ? (
-                                    classes.map((classItem, index) => (
-                                        <TouchableOpacity
-                                            key={index}
-                                            style={styles.modalButton}
-                                            onPress={() => {
-                                                setSelectedClass(classItem);
-                                                setIsModalVisible(false); // Hide the modal
-                                            }}
-                                        >
-                                            <Text>{classItem.class_name}</Text>
-                                        </TouchableOpacity>
-                                    ))
-                                ) : (
-                                    <Text>No classes available</Text>
-                                )}
-                            </View>
-                        </View>
-                    </Modal>
-
-                    <Text style={styles.subtitle}>
-                        Your students:
-                        {/* Have the result of the returned API call for user context returned here.  */}
-                    </Text>
                 </ScrollView>
                 <Navbar navigation={navigation} />
             </View>

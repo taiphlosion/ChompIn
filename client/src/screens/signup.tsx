@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet } from "react-native";
+import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity } from "react-native";
 import { useNavigation } from '@react-navigation/native';
 import RadioGroup from 'react-native-radio-buttons-group';
 import { RootStackParamList } from '../types/types';
@@ -107,8 +107,6 @@ export default function Signup() {
 
             if (response.ok) {
                 console.log('Signup success:', data);
-
-                navigation.navigate('login');
                 navigation.reset({
                     index: 0, // The first screen in the stack
                     routes: [{ name: 'login' }], // The route you want to go to (Login screen)
@@ -125,10 +123,6 @@ export default function Signup() {
                 console.error("Signup error:", error);
             }
         }
-    };
-
-    const navigateToRegister = () => {
-        navigation.navigate('signup');
     };
 
     return (
@@ -200,6 +194,11 @@ export default function Signup() {
 
                 {/* Submit button */}
                 <Button title="Submit" onPress={handleSignUp} />
+
+                {/* 🚀 Back to Login Button */}
+                <TouchableOpacity style={styles.backToLogin} onPress={() => navigation.reset({ index: 0, routes: [{ name: 'login' }]})}>
+                    <Text style={styles.backToLoginText}>Back to Login</Text>
+                </TouchableOpacity>
             </View>
         </View>
     );
@@ -250,6 +249,14 @@ const styles = StyleSheet.create({
         color: 'black',
     },
     signUpLink: {
+        color: 'blue',
+        textDecorationLine: 'underline',
+    },
+    backToLogin: {
+        marginTop: 15,
+        alignItems: 'center',
+    },
+    backToLoginText: {
         color: 'blue',
         textDecorationLine: 'underline',
     },

@@ -51,9 +51,6 @@ export default function Login() {
         }
     };
 
-    const navigateToRegister = () => {
-        navigation.navigate('signup');
-    };
 
     return (
         <View style={styles.container}>
@@ -78,7 +75,7 @@ export default function Login() {
 
                 <View style={styles.signUpContainer}>
                     <Text style={styles.signUpText}>Don't have an account? </Text>
-                    <Text style={styles.signUpLink} onPress={navigateToRegister}>Sign Up</Text>
+                    <Text style={styles.signUpLink} onPress={() => navigation.navigate('signup')}>Sign Up</Text>
                 </View>
 
             </View>

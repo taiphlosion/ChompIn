@@ -22,19 +22,6 @@ export default function Home() {
     const [selectedClass, setSelectedClass] = React.useState<{ class_name: string, id: number, professor_id: number } | null>(null);
     const [isModalVisible, setIsModalVisible] = React.useState(false);
 
-    const handleLogout = async () => {
-        setUser(null);
-        try{
-            await fetch(`${API_URL}/api/auth/logout`, {
-                method: 'POST',
-                credentials: 'include',
-            });
-            console.log("Logout successful");
-            navigation.navigate("login");
-        }
-        catch(error){ console.log(error); }
-    };
-
     const classList = async () => {
         try {
             const response = await fetch(`${API_URL}/api/user/classrooms`, {
@@ -127,7 +114,6 @@ export default function Home() {
                         Your students:
                         {/* Have the result of the returned API call for user context returned here.  */}
                     </Text>
-                    <Button title="Logout" onPress={handleLogout} />
                 </ScrollView>
                 <Navbar navigation={navigation} />
             </View>
@@ -146,8 +132,6 @@ export default function Home() {
                     </Text>
                     {/* Takes you to the scan screen */}
                     <ChompIn title="Chomp-In?" onPress={handleChompInPress} />
-
-                    <Button title="Logout" onPress={handleLogout} />
 
                 </ScrollView>
                 <Navbar navigation={navigation} />

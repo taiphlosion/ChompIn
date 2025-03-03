@@ -3,7 +3,8 @@ import { View, StyleSheet, Button, TouchableOpacity, Text } from "react-native";
 import { useUserContext } from "@/context/user";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import { RootStackParamList } from "@/types/types"; 
-import { Camera, CameraType, useCameraPermissions, CameraView } from 'expo-camera';
+import { CameraType, useCameraPermissions, CameraView } from 'expo-camera';
+import { Ionicons } from '@expo/vector-icons';
 import Topbar from '@/components/topbar';
 import Navbar from '@/components/navbar';
 import QRCode from 'react-native-qrcode-svg';
@@ -54,10 +55,10 @@ export default function CameraScreen() {
 
             <View style={styles.overlay}>
                 <TouchableOpacity style={styles.button} onPress={toggleCameraFacing}>
-                    <Text style={styles.text}>Flip Camera</Text>
+                    <Ionicons name="refresh-outline" size={40} color="black" />
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.button} onPress={handleSnap}>
-                    <Text style={styles.text}>Snap</Text>
+                    <Ionicons name="camera" size={40} color="black" />
                 </TouchableOpacity>
             </View>
 

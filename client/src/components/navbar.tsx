@@ -16,6 +16,7 @@ interface NavbarProps {
 };
 
 export default function Navbar({ navigation }: NavbarProps) {
+    
     return (
         <View style={styles.navbar}>
             {/* Home */}

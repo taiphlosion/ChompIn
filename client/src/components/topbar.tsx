@@ -1,17 +1,23 @@
 import React from "react";
 import { View, StyleSheet, Image, Dimensions, TouchableOpacity } from "react-native";
+import { useNavigation, NavigationProp } from "@react-navigation/native";
+import { RootStackParamList } from "@/types/types"; 
 
 const { height } = Dimensions.get("window");
 
 export default function Topbar() {
+    const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+
     return (
         <View style={styles.topbar}>
-            <Image 
-                source={require('../assets/images/home/logo-with-name.png')} 
-                style={styles.logoName}
-            />
+            <TouchableOpacity onPress={() => navigation.navigate("home")} style={styles.logoName}>
+                <Image 
+                    source={require('../assets/images/home/logo-with-name.png')} 
+                    style={styles.logoName}
+                />
+            </TouchableOpacity>
 
-            <TouchableOpacity style={styles.helpIcon}>
+            <TouchableOpacity>
                 <Image 
                 source={require('../assets/images/home/feedback.png')} 
                 style={styles.helpIcon}
@@ -24,7 +30,7 @@ export default function Topbar() {
 const styles = StyleSheet.create({
     topbar: {
         width: "100%",         
-        height: height * 0.14699, //Adjust how big the topbar is           
+        height: height * 0.11, //Adjust how big the topbar is           
         backgroundColor: "#87cefa", 
         flexDirection: "row",
         justifyContent: "space-between",   
@@ -36,7 +42,7 @@ const styles = StyleSheet.create({
         zIndex: 1000,              
     }, 
     logoName: {
-        width: "60%",
+        width: "75%",
         height: "100%",
         resizeMode: "contain",
     },
@@ -49,5 +55,10 @@ const styles = StyleSheet.create({
         height: "80%",
         aspectRatio: 1, 
         resizeMode: "contain",
-    }
+        marginRight: 10,
+    },
+    logoContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
 });

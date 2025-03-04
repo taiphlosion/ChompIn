@@ -8,7 +8,7 @@ import Topbar from '@/components/topbar';
 
 export default function Leaderboard() {
     const navigation = useNavigation<NavigationProp<RootStackParamList>>();
-        const { user } = useUserContext();
+    const { user } = useUserContext();
 
     const renderProfessorView = () => {
         console.log("Rendering professor view");

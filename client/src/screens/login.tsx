@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet } from "react-native";
+import { View, Text, TextInput, Button, StyleSheet, Image } from "react-native";
 import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../types/types';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -54,6 +54,7 @@ export default function Login() {
 
     return (
         <View style={styles.container}>
+            <Image source={require('../assets/images/home/logo-with-name.png')}  style={styles.loginBanner}/>
             <View style={styles.formBox}>
                 <Text style={styles.title}>Please Sign In</Text>
                 <TextInput
@@ -126,4 +127,10 @@ const styles = StyleSheet.create({
         color: 'blue',
         textDecorationLine: 'underline',
     },
+    loginBanner: {
+        position: 'absolute',
+        top: 0,
+        resizeMode: 'contain',
+        width: '100%',
+    }
 })

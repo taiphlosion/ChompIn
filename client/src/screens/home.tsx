@@ -54,11 +54,8 @@ export default function Home() {
     }
   }, []);
 
-  //TODO: Wait for Mauricio to fix to POST to test out
   const handleQRCreation = async () => {
-    if (!selectedClass?.id) {
-      return;
-    }
+    if (!selectedClass?.id) { return; }
 
     const classId = selectedClass.id;
 
@@ -68,18 +65,14 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ classroom_id: selectedClass.id }),
+        body: JSON.stringify({ classroom_id: classId }),
         credentials: "include",
       });
       if (response.ok) {
-        console.log(response);
         const data = await response.json();
-        console.log(data);
         navigation.navigate("scan", { qrCode: data.qrImage });
       }
-    } catch (error) {
-      console.log(error);
-    }
+    } catch (error) { console.log(error); }
   };
 
   const handleChompInPress = () => {

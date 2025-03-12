@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, Button, TouchableOpacity, Text } from "react-native";
+import { View, StyleSheet, Button, TouchableOpacity, Text, Image } from "react-native";
 import { useUserContext } from "@/context/user";
-import { useNavigation, NavigationProp } from "@react-navigation/native";
+import { useNavigation, NavigationProp, useRoute, RouteProp } from "@react-navigation/native";
 import { RootStackParamList } from "@/types/types"; 
 import { CameraType, useCameraPermissions, CameraView } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,6 +13,19 @@ export default function CameraScreen() {
     const { user } = useUserContext();
     const [facing, setFacing] = useState<CameraType>('back');
     const [permission, requestPermission] = useCameraPermissions();
+    const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+    const route = useRoute<RouteProp<RootStackParamList, 'scan'>>();
+
+    const qrImageData = route.params?.qrCode;
+
+    console.log(qrImageData);
+
+    function toggleCameraFacing() { setFacing(current => current === 'back' ? 'front' : 'back'); }
+
+    function handleSnap() {
+        // This can be turned into QR code scanning logic here
+        console.log("Snap taken");
+    }
 
     // Check if the permission is null (initial state)
     if (permission === null) { return <View />; }
@@ -26,22 +39,20 @@ export default function CameraScreen() {
         );
     }
 
-    function toggleCameraFacing() { setFacing(current => current === 'back' ? 'front' : 'back'); }
-
-    function handleSnap() {
-        // This can be turned into QR code scanning logic here
-        console.log("Snap taken");
-    }
-
-    const navigation = useNavigation<NavigationProp<RootStackParamList>>();
-
     const renderProfessorView = () => {
         return(
             <View style={styles.container}>
                 <Topbar />
                 <Text style={styles.text}>Have your students scan this</Text>
-                {/* Do an API call here to get QR code content */}
-                <QRCode value="Your QR Code Content Here" size={200} />
+                {route.params.qrCode ? (
+                    <Image 
+                        source={{uri: route.params.qrCode}}
+                        style={{width: 200, height: 200}}
+                        resizeMode="contain"
+                    />
+                ):(
+                    <QRCode value="Your QR Code Content Here" size={200} />
+                )}
                 <Navbar navigation={navigation} />
             </View>
         );

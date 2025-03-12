@@ -8,6 +8,9 @@ import { Ionicons } from '@expo/vector-icons';
 import Topbar from '@/components/topbar';
 import Navbar from '@/components/navbar';
 import QRCode from 'react-native-qrcode-svg';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+let globalQRCode = "";
 
 export default function CameraScreen() {
     const { user } = useUserContext();
@@ -16,9 +19,9 @@ export default function CameraScreen() {
     const navigation = useNavigation<NavigationProp<RootStackParamList>>();
     const route = useRoute<RouteProp<RootStackParamList, 'scan'>>();
 
-    const qrImageData = route.params?.qrCode;
+    useEffect(() => { if (route.params?.qrCode) {globalQRCode = route.params.qrCode;} }, [route.params?.qrCode]);
 
-    console.log(qrImageData);
+    const qrCodeToShow = globalQRCode || route.params?.qrCode;
 
     function toggleCameraFacing() { setFacing(current => current === 'back' ? 'front' : 'back'); }
 
@@ -44,9 +47,9 @@ export default function CameraScreen() {
             <View style={styles.container}>
                 <Topbar />
                 <Text style={styles.text}>Have your students scan this</Text>
-                {route.params.qrCode ? (
+                {qrCodeToShow ? (
                     <Image 
-                        source={{uri: route.params.qrCode}}
+                        source={{uri: qrCodeToShow}}
                         style={{width: 200, height: 200}}
                         resizeMode="contain"
                     />

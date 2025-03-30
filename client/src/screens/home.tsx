@@ -81,6 +81,26 @@ export default function Home() {
 
   const renderProfessorView = () => {
     console.log("Rendering professor view");
+
+    if (classes.length === 0) {
+      return (
+        <View style={styles.container}>
+          <Topbar />
+          <View style={styles.contentContainer}>
+            <Text style={styles.title}>No Classes Found! </Text>
+            <Text style={styles.subtitle}>
+              You don't have any classes yet. Create your first class to get started.
+            </Text>
+            <Button 
+              title="Create New Class" 
+              onPress={() => navigation.navigate('class')} 
+            />
+          </View>
+          <Navbar navigation={navigation} />
+        </View>
+      );
+    }
+    
     return (
       <View style={styles.container}>
         <Topbar />

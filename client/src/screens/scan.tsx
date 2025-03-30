@@ -16,19 +16,22 @@ export default function CameraScreen() {
     const { user } = useUserContext();
     const [facing, setFacing] = useState<CameraType>('back');
     const [permission, requestPermission] = useCameraPermissions();
+    const [hasScanned, setHasScanned] = useState(false);
     const navigation = useNavigation<NavigationProp<RootStackParamList>>();
     const route = useRoute<RouteProp<RootStackParamList, 'scan'>>();
 
     useEffect(() => { if (route.params?.qrCode) {globalQRCode = route.params.qrCode;} }, [route.params?.qrCode]);
-
     const qrCodeToShow = globalQRCode || route.params?.qrCode;
 
     function toggleCameraFacing() { setFacing(current => current === 'back' ? 'front' : 'back'); }
 
-    function handleSnap() {
-        // This can be turned into QR code scanning logic here
-        console.log("Snap taken");
-    }
+    const handleSnap = ({ type, data }: { type: string; data: string }) => {
+        if (hasScanned) { return; }
+        setHasScanned(true);
+        console.log(`Bar code with type ${type} and data ${data} has been scanned!`);
+
+        setTimeout(() => { setHasScanned(false); }, 2000);
+    };
 
     // Check if the permission is null (initial state)
     if (permission === null) { return <View />; }
@@ -65,16 +68,21 @@ export default function CameraScreen() {
         return(
             <View style={styles.container}>
             <Topbar />
-            <CameraView style={styles.camera} facing={facing} />
+            <CameraView 
+                style={styles.camera} 
+                facing={facing} 
+                onBarcodeScanned={hasScanned ? undefined : handleSnap}
+                barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
+            />
 
-            <View style={styles.overlay}>
+            {/* <View style={styles.overlay}>
                 <TouchableOpacity style={styles.button} onPress={toggleCameraFacing}>
                     <Ionicons name="refresh-outline" size={40} color="black" />
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.button} onPress={handleSnap}>
                     <Ionicons name="camera" size={40} color="black" />
                 </TouchableOpacity>
-            </View>
+            </View> */}
 
             <Navbar navigation={navigation} />
         </View>

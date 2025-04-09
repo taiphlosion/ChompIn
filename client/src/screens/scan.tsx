@@ -8,7 +8,6 @@ import { Ionicons } from '@expo/vector-icons';
 import Topbar from '@/components/topbar';
 import Navbar from '@/components/navbar';
 import QRCode from 'react-native-qrcode-svg';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from "expo-constants";
 
 const API_URL = Constants.expoConfig?.extra?.API_URL || "http://localhost:5000";
@@ -25,27 +24,24 @@ export default function CameraScreen() {
         messageType: "info",      // Type of message: "success", "error", "info"
     });
     
-    // Reference to track if we're currently processing a scan
-    // This prevents multiple scans from being processed simultaneously
+    // Prevents multiple scans from being processed simultaneously
     const isProcessingRef = useRef(false);
     
     // Store the last processed QR code to prevent duplicates
     const lastScannedCode = useRef("");
 
+    // navigation purposes
     const navigation = useNavigation<NavigationProp<RootStackParamList>>();
     const route = useRoute<RouteProp<RootStackParamList, 'scan'>>();
 
+    //loads in current or default QR code
     useEffect(() => { 
-        if (route.params?.qrCode) {
-            globalQRCode = route.params.qrCode;
-        } 
+        if (route.params?.qrCode) { globalQRCode = route.params.qrCode; } 
     }, [route.params?.qrCode]);
     
     const qrCodeToShow = globalQRCode || route.params?.qrCode;
 
-    function toggleCameraFacing() { 
-        setFacing(current => current === 'back' ? 'front' : 'back'); 
-    }
+    function toggleCameraFacing() { setFacing(current => current === 'back' ? 'front' : 'back'); }
 
     const handleSnap = async ({ type, data }: { type: string; data: string }) => {
         // Check if we're already processing or the camera is not scanning
@@ -60,7 +56,7 @@ export default function CameraScreen() {
             return;
         }
         
-        // Set processing flags immediately (both state and ref)
+        // Set processing flags immediately
         isProcessingRef.current = true;
         lastScannedCode.current = data;
         
@@ -73,6 +69,7 @@ export default function CameraScreen() {
             messageType: "info" 
         }));
 
+        // API Call: /api/user/mark-attendance to mark attendance for student
         try {
             const url = new URL(`http://placeholder.com/${data.split('undefined/')[1]}`);
             const sessionId = url.searchParams.get('session');
@@ -102,7 +99,9 @@ export default function CameraScreen() {
                     message: "Attendance marked successfully!", 
                     messageType: "success" 
                 }));
-            } else { 
+            } 
+            // usually identical PK in table, Mauricio will fix this
+            else { 
                 setScanState(prev => ({ 
                     ...prev, 
                     isProcessing: false,
@@ -110,7 +109,8 @@ export default function CameraScreen() {
                     messageType: "error" 
                 }));
             }
-        } catch (error) {
+        } 
+        catch (error) {
             console.error(error);
             setScanState(prev => ({ 
                 ...prev, 
@@ -118,15 +118,13 @@ export default function CameraScreen() {
                 message: "Error scanning QR code. Please try again.", 
                 messageType: "error" 
             }));
-            // We don't reset isProcessingRef here so no new scans can happen
-            // until the timeout in the useEffect above
         }
     };
 
-    // Check if the permission is null (initial state)
+    // initial state with no permission
     if (permission === null) { return <View />; }
 
-    // If permission is not granted, show a button to request permission
+    // request permission
     if (!permission.granted) {
         return (
             <View style={styles.container}>
@@ -147,6 +145,7 @@ export default function CameraScreen() {
                         resizeMode="contain"
                     />
                 ):(
+                    // Default QR Code here when no class is selected
                     <QRCode value="Your QR Code Content Here" size={200} />
                 )}
                 <Navbar navigation={navigation} />
@@ -159,7 +158,7 @@ export default function CameraScreen() {
             <View style={styles.container}>
                 <Topbar />
                 <View style={styles.cameraContainer}>
-                    {/* Only show camera when scanning is enabled */}
+                    {/* Only show camera when scanning is enabled otherwise default camera screen*/}
                     {scanState.isScanning ? (
                         <CameraView 
                             style={styles.camera} 
@@ -191,7 +190,15 @@ export default function CameraScreen() {
                     )}
                 </View>
 
+                    
+                {/* Controls and messages for the camera */}
                 <View style={styles.controlsContainer}>
+                    <Image 
+                        source={require('@/assets/images/scan/gator-camera.png')} 
+                        style={{ width: 100, height: 100, marginLeft: 20, marginRight: 50 }} 
+                        resizeMode="contain" 
+                    />
+
                     <TouchableOpacity 
                         style={styles.button} 
                         onPress={toggleCameraFacing}
@@ -200,7 +207,8 @@ export default function CameraScreen() {
                         <Ionicons name="refresh-outline" size={30} color={scanState.isProcessing ? "#999" : "#000"} />
                         <Text>Flip Camera</Text>
                     </TouchableOpacity>
-                    
+
+                    {/* Success or failure screen of scan. Resets evertyhing after scan again button pressed                     */}
                     {!scanState.isScanning && !scanState.isProcessing && (
                         <TouchableOpacity 
                             style={styles.scanAgainButton}
@@ -214,9 +222,7 @@ export default function CameraScreen() {
                                 }));
                                 isProcessingRef.current = false;
                                 // Keep the last scanned code for a few seconds
-                                setTimeout(() => {
-                                    lastScannedCode.current = "";
-                                }, 3000);
+                                setTimeout(() => { lastScannedCode.current = "";}, 3000);
                             }}
                         >
                             <Text style={styles.scanAgainText}>Scan Again</Text>
@@ -229,6 +235,7 @@ export default function CameraScreen() {
         );
     };
 
+    // Have two different views based on the user there
     if (user?.role === "professor") { return renderProfessorView(); }
     return renderStudentView();
 }

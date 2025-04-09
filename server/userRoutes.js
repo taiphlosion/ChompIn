@@ -49,7 +49,7 @@ router.post("/create-classroom", verifyToken, authorizeRoles("professor"), async
   }
 });
 
-router.get(
+router.post(
   "/generate-qr",
   verifyToken,
   authorizeRoles("professor"),

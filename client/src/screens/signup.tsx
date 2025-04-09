@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet } from "react-native";
+import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity } from "react-native";
 import { useNavigation } from '@react-navigation/native';
 import RadioGroup from 'react-native-radio-buttons-group';
 import { RootStackParamList } from '../types/types';
 import { StackNavigationProp } from '@react-navigation/stack';
+import Constants from 'expo-constants';
+
+const API_URL = Constants.expoConfig?.extra?.API_URL || "http://localhost:5000";
 
 type signupScreenNavigationProp = StackNavigationProp<RootStackParamList, 'signup'>;
 
@@ -86,7 +89,7 @@ export default function Signup() {
 
         //REGISTER USER
         try{
-            const response = await fetch('http://localhost:5000/api/auth/register', {
+            const response = await fetch(`${API_URL}/api/auth/register`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -104,8 +107,6 @@ export default function Signup() {
 
             if (response.ok) {
                 console.log('Signup success:', data);
-
-                navigation.navigate('login');
                 navigation.reset({
                     index: 0, // The first screen in the stack
                     routes: [{ name: 'login' }], // The route you want to go to (Login screen)
@@ -122,10 +123,6 @@ export default function Signup() {
                 console.error("Signup error:", error);
             }
         }
-    };
-
-    const navigateToRegister = () => {
-        navigation.navigate('signup');
     };
 
     return (
@@ -197,6 +194,11 @@ export default function Signup() {
 
                 {/* Submit button */}
                 <Button title="Submit" onPress={handleSignUp} />
+
+                {/* 🚀 Back to Login Button */}
+                <TouchableOpacity style={styles.backToLogin} onPress={() => navigation.reset({ index: 0, routes: [{ name: 'login' }]})}>
+                    <Text style={styles.backToLoginText}>Back to Login</Text>
+                </TouchableOpacity>
             </View>
         </View>
     );
@@ -247,6 +249,14 @@ const styles = StyleSheet.create({
         color: 'black',
     },
     signUpLink: {
+        color: 'blue',
+        textDecorationLine: 'underline',
+    },
+    backToLogin: {
+        marginTop: 15,
+        alignItems: 'center',
+    },
+    backToLoginText: {
         color: 'blue',
         textDecorationLine: 'underline',
     },

@@ -1,4 +1,5 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useCallback } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import { View, Text, StyleSheet, Button } from "react-native";
 import { useUserContext } from "@/context/user";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
@@ -47,12 +48,13 @@ export default function Home() {
     value: cls.class_name,
   }));
 
-  //TODO: Run a different function to get the API call for all classes involved with students.
-  useEffect(() => {
-    if (user?.role === "professor") {
-      classList();
-    }
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      if (user?.role === "professor") {
+        classList();
+      }
+    }, [user])
+  );
 
   const handleQRCreation = async () => {
     if (!selectedClass?.id) { return; }

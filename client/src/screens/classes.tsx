@@ -55,10 +55,11 @@ export default function Class() {
             if (response.ok) {
                 const data = await response.json();
                 console.log(data);
-                setClasses((prevClasses) => [...prevClasses, data]);
+                setClasses((prevClasses) => [...prevClasses, data.classroom]);
                 setClassName("");
                 setShowForm(false);
-            } else { alert("Failed to create class. Please try again."); }
+            } 
+            else { alert("Failed to create class. Please try again."); }
         }
         catch (error) { console.log(error); }
         finally { setIsSubmitting(false); }

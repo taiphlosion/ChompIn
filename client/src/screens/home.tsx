@@ -8,7 +8,6 @@ import { ScrollView } from "react-native-gesture-handler";
 import { SelectList } from "react-native-dropdown-select-list";
 import Topbar from "@/components/topbar";
 import ChompIn from "@/components/student/chomp-in";
-import QRCreation from "@/components/professor/qr-creation";
 import Navbar from "@/components/navbar";
 import Constants from "expo-constants";
 

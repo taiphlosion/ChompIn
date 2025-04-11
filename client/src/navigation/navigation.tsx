@@ -9,7 +9,6 @@ import ScanScreen from "@/screens/scan";
 import ClassScreen from "@/screens/classes";
 import LeaderboardScreen from "@/screens/leaderboards";
 import SettingScreen from "@/screens/settings";
-import Navbar from "@/components/navbar";
  
 
 const Stack = createStackNavigator();

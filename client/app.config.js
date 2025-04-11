@@ -41,7 +41,16 @@ export default {
     },
     extra: {
       API_URL: process.env.API_URL,
-      PRODUCTION_API_URL: process.env.PRODUCTION_API_URL
+      PRODUCTION_API_URL: process.env.PRODUCTION_API_URL,
+      "eas": {
+        "projectId": "a00d6650-4a7d-4627-9b36-f88974dca801"
+      }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/a00d6650-4a7d-4627-9b36-f88974dca801"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
     }
   }
 };

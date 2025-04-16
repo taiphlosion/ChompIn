@@ -20,7 +20,7 @@ export interface User {
     home: undefined;
     scan: {qrCode: string};
     class: undefined;
-    leaderboard: undefined;
+    analytics: undefined;
     setting: undefined;
   };
   

@@ -67,7 +67,7 @@ export default function Setting() {
     return (
         <View style={styles.container}>
             <Topbar />
-            <Text style={styles.text}>Settings</Text>
+            <Text style={styles.text}>Settings ⚙️</Text>
         
             <ScrollView contentContainerStyle={styles.scrollView}>
 

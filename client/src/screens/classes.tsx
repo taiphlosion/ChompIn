@@ -355,13 +355,14 @@ export default function ClassScreen() {
             <View style={styles.studentContentContainer}>
                 <View style={styles.studentHeader}>
                     <Text style={styles.headerTitle}>My Classes</Text>
-                    <TouchableOpacity 
+                    {/* Maybe have it, depends on how we decide between automatic QR code enrollement or just manual */}
+                    {/* <TouchableOpacity 
                         style={styles.enrollButton}
                         onPress={() => setEnrollModalVisible(true)}
                     >
                         <Ionicons name="add-circle" size={20} color="#333" />
                         <Text style={styles.enrollButtonText}>Enroll in Class</Text>
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                 </View>
 
                 <View style={styles.searchContainer}>
@@ -437,8 +438,8 @@ export default function ClassScreen() {
                                     <Text style={styles.attendancePercent}>{item.attendance_rate}%</Text>
                                 </View>
                             </View>
-                            
-                            <View style={styles.studentClassActions}>
+                            {/* Debatable on if we want it to have this or not, maybe just a button to open the QR code scanner */}
+                            {/* <View style={styles.studentClassActions}>
                                 <TouchableOpacity 
                                     style={styles.studentClassButton}
                                     onPress={() => navigation.navigate("scan", { qrCode: "" })}
@@ -454,7 +455,7 @@ export default function ClassScreen() {
                                     <Ionicons name="trophy" size={16} color="#333" />
                                     <Text style={styles.studentClassButtonText}>Leaderboard</Text>
                                 </TouchableOpacity>
-                            </View>
+                            </View> */}
                         </View>
                     )}
                     keyExtractor={(item) => item.id.toString()}
@@ -550,7 +551,7 @@ const styles = StyleSheet.create({
         marginTop: 16,
     },
     headerTitle: {
-        fontSize: 24,
+        fontSize: 30,
         fontWeight: "bold",
         color: "#333",
     },
@@ -824,6 +825,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         marginBottom: 16,
         marginTop: 16,
+        paddingTop: Constants.statusBarHeight,
     },
     enrollButton: {
         flexDirection: "row",

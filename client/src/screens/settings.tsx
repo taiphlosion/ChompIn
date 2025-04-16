@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
         marginLeft: 12,
     },
     text: {
-        fontSize: 24,
+        fontSize: 30,
         fontWeight: "bold",
         marginTop: 120,
         marginLeft: 20,
@@ -257,7 +257,6 @@ const styles = StyleSheet.create({
         paddingBottom: 100,
     },
     section: {
-        marginHorizontal: 16,
         marginVertical: 8,
         backgroundColor: '#fff',
         borderRadius: 10,
@@ -267,6 +266,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 2,
         elevation: 2,
+        width: '90%',
     },
     sectionTitle: {
         fontSize: 16,

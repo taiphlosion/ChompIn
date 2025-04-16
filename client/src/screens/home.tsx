@@ -42,7 +42,6 @@ export default function Home() {
   
   // For animations and UI effects
   const [isLoading, setIsLoading] = useState(false);
-  const [showWelcomeMessage, setShowWelcomeMessage] = useState(true);
 
   const classList = async () => {
     try {
@@ -70,13 +69,6 @@ export default function Home() {
       if (user?.role === "professor") {
         classList();
       }
-      
-      // Welcome message timer
-      const timer = setTimeout(() => {
-        setShowWelcomeMessage(false);
-      }, 2000);
-      
-      return () => clearTimeout(timer);
     }, [user])
   );
 
@@ -124,7 +116,7 @@ export default function Home() {
               />
               
               <Text style={styles.welcomeTitle}>
-                Welcome, Professor {user?.first_name}!
+                Welcome, Professor {user?.first_name}! 👋
               </Text>
               
               <Text style={styles.welcomeSubtitle}>
@@ -148,13 +140,11 @@ export default function Home() {
       <View style={styles.container}>
         <Topbar />
         <ScrollView contentContainerStyle={styles.scrollContentContainer}>
-          {showWelcomeMessage && (
-            <View style={styles.welcomeBanner}>
-              <Text style={styles.welcomeBannerText}>
-                Welcome back, Professor {user?.first_name}!
-              </Text>
-            </View>
-          )}
+          <View style={styles.welcomeBanner}>
+            <Text style={styles.welcomeBannerText}>
+              Welcome, Professor {user?.first_name}! 👋
+            </Text>
+          </View>
           
           <View style={styles.headerCard}>
             <Text style={styles.headerTitle}>Today's Date 📅</Text>
@@ -265,13 +255,11 @@ export default function Home() {
       <View style={styles.container}>
         <Topbar />
         <ScrollView contentContainerStyle={styles.scrollContentContainer}>
-          {showWelcomeMessage && (
-            <View style={styles.welcomeBanner}>
-              <Text style={styles.welcomeBannerText}>
-                Welcome back, {user?.first_name}!
-              </Text>
-            </View>
-          )}
+          <View style={styles.welcomeBanner}>
+            <Text style={styles.welcomeBannerText}>
+              Chomping in, {user?.first_name}?👋
+            </Text>
+          </View>
           
           <View style={styles.studentHeaderCard}>
             <View style={styles.studentHeaderContent}>
@@ -399,14 +387,10 @@ const styles = StyleSheet.create({
   
   // Welcome banner
   welcomeBanner: {
-    backgroundColor: "#4FEEAC",
     padding: 12,
-    borderRadius: 8,
-    marginTop: 8,
-    marginBottom: 16,
   },
   welcomeBannerText: {
-    fontSize: 16,
+    fontSize: 25,
     fontWeight: "bold",
     textAlign: "center",
     color: "#333",

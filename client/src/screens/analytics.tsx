@@ -105,7 +105,7 @@ export default function Leaderboard() {
             <View style={styles.container}>
                 <Topbar />
                 <View style={styles.contentContainer}>
-                    <Text style={styles.screenTitle}>Baby Gator Stats</Text>
+                    <Text style={styles.screenTitle}>Baby Gator Stats 🦎📈</Text>
                     
                     <ScrollView contentContainerStyle={styles.scrollContent}>
                         <View style={styles.section}>
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
     },
     screenTitle: {
-        fontSize: 24,
+        fontSize: 30,
         fontWeight: "bold",
         textAlign: "center",
         marginTop: -8,

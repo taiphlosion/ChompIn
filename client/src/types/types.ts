@@ -22,5 +22,6 @@ export interface User {
     class: undefined;
     analytics: undefined;
     setting: undefined;
+    feedback: undefined;
   };
   

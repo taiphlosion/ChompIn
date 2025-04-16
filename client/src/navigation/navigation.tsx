@@ -9,6 +9,7 @@ import ScanScreen from "@/screens/scan";
 import ClassScreen from "@/screens/classes";
 import AnalyticsScreen from "@/screens/analytics"
 import SettingScreen from "@/screens/settings";
+import FeedbackScreen from "@/screens/feedback";
  
 
 const Stack = createStackNavigator();
@@ -22,6 +23,7 @@ function Tabs() {
             <Tab.Screen name="class" component={ClassScreen} />
             <Tab.Screen name="analytics" component={AnalyticsScreen} />
             <Tab.Screen name="setting" component={SettingScreen} />
+            <Tab.Screen name="feedback" component={FeedbackScreen} />
         </Tab.Navigator>
     );
 }

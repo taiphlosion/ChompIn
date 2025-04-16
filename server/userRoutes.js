@@ -87,6 +87,15 @@ router.post(
       const qrData = `${process.env.URL}/attendance?session=${sessionId}`;
       const qrImage = await QRCode.toDataURL(qrData);
 
+
+      // 2. Update class summaries by 1 total session 
+      await pool.query(
+        `UPDATE attendance_summary
+       SET total_sessions = total_sessions + 1
+      WHERE classroom_id = $1`,
+        [classroom_id]
+      );
+
       await pool.query(
         `INSERT INTO sessions (session_id, classroom_id, professor_id, session_date, expires_at)
          VALUES ($1, $2, $3, $4, $5)`,
@@ -129,20 +138,21 @@ router.post('/mark-attendance', verifyToken, authorizeRoles('student'), async (r
     );
 
     const classroom = classroomResult.rows[0];
-    // if (classroom.canvas_course_id) {
-    //   const canvasRoster = await canvasApi.get(
-    //     `/courses/${classroom.canvas_course_id}/enrollments`,
-    //     { params: { type: ['StudentEnrollment'] } }
-    //   );
 
-    //   const canvasMatch = canvasRoster.data.some(entry =>
-    //     entry.user.login_id?.toLowerCase() === req.user.email.toLowerCase()
-    //   );
+    if (classroom.canvas_course_id) {
+      const canvasRoster = await canvasApi.get(
+        `/courses/${classroom.canvas_course_id}/enrollments`,
+        { params: { type: ['StudentEnrollment'] } }
+      );
 
-    //   if (!canvasMatch) {
-    //     return res.status(403).json({ error: "You are not enrolled in this Canvas course" });
-    //   }
-    // }
+      const canvasMatch = canvasRoster.data.some(entry =>
+        entry.user.login_id?.toLowerCase() === req.user.email.toLowerCase()
+      );
+
+      if (!canvasMatch) {
+        return res.status(403).json({ error: "You are not enrolled in this Canvas course" });
+      }
+    }
     // 3. Auto-enroll if not already
     await pool.query(
       `INSERT INTO enrollments (student_id, classroom_id)
@@ -185,8 +195,7 @@ router.post('/mark-attendance', verifyToken, authorizeRoles('student'), async (r
     // 2. Update summary
     await pool.query(
       `UPDATE attendance_summary
-       SET total_sessions = total_sessions + 1,
-           present_count = present_count + 1,
+       SET present_count = present_count + 1,
            updated_at = CURRENT_TIMESTAMP
        WHERE student_id = $1 AND classroom_id = $2`,
       [studentId, classroom_id]
@@ -202,8 +211,8 @@ router.post('/mark-attendance', verifyToken, authorizeRoles('student'), async (r
     const grade = ((present_count + late_count * 0.8) / total_sessions) * 100;
     console.log("Attendance grade", grade.toFixed(2));
 
-    // // canvas api 
-    // // 4. Submit to Canvas (if linked — update below)
+    // canvas api 
+    // 4. Submit to Canvas (if linked — update below)
     // const canvasAssignmentId = 12345; // <-- replace with real assignmentId
     // const canvasCourseId = 67890;     // <-- replace with real courseId
     // await canvasApi.post(`/courses/${canvasCourseId}/assignments/${canvasAssignmentId}/submissions`, {

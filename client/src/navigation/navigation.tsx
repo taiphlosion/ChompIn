@@ -7,9 +7,9 @@ import SignupScreen from "@/screens/signup";
 import HomeScreen from "@/screens/home";
 import ScanScreen from "@/screens/scan";
 import ClassScreen from "@/screens/classes";
-import LeaderboardScreen from "@/screens/leaderboards";
+import AnalyticsScreen from "@/screens/analytics"
 import SettingScreen from "@/screens/settings";
-import Navbar from "@/components/navbar";
+import FeedbackScreen from "@/screens/feedback";
  
 
 const Stack = createStackNavigator();
@@ -21,8 +21,9 @@ function Tabs() {
             <Tab.Screen name="home" component={HomeScreen} />
             <Tab.Screen name="scan" component={ScanScreen} />
             <Tab.Screen name="class" component={ClassScreen} />
-            <Tab.Screen name="leaderboard" component={LeaderboardScreen} />
+            <Tab.Screen name="analytics" component={AnalyticsScreen} />
             <Tab.Screen name="setting" component={SettingScreen} />
+            <Tab.Screen name="feedback" component={FeedbackScreen} />
         </Tab.Navigator>
     );
 }

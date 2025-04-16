@@ -92,6 +92,8 @@ export default function CameraScreen() {
                 body: JSON.stringify({ sessionId }),
             });
 
+            const json = await response.json();
+
             if (response.ok) {
                 setScanState(prev => ({ 
                     ...prev, 
@@ -100,22 +102,21 @@ export default function CameraScreen() {
                     messageType: "success" 
                 }));
             } 
-            // usually identical PK in table, Mauricio will fix this
-            else { 
+            else {  
                 setScanState(prev => ({ 
                     ...prev, 
                     isProcessing: false,
-                    message: "Failed to mark attendance. Please try again.", 
+                    message: json.error, 
                     messageType: "error" 
                 }));
             }
         } 
-        catch (error) {
+        catch (error: any) {
             console.error(error);
             setScanState(prev => ({ 
                 ...prev, 
                 isProcessing: false,
-                message: "Error scanning QR code. Please try again.", 
+                message: error.message || "An error occurred. Please try again.", 
                 messageType: "error" 
             }));
         }
@@ -208,7 +209,7 @@ export default function CameraScreen() {
                         <Text>Flip Camera</Text>
                     </TouchableOpacity>
 
-                    {/* Success or failure screen of scan. Resets evertyhing after scan again button pressed                     */}
+                    {/* Success or failure screen of scan. Resets evertyhing after scan again button pressed */}
                     {!scanState.isScanning && !scanState.isProcessing && (
                         <TouchableOpacity 
                             style={styles.scanAgainButton}
@@ -229,7 +230,6 @@ export default function CameraScreen() {
                         </TouchableOpacity>
                     )}
                 </View>
-
                 <Navbar navigation={navigation} />
             </View>
         );

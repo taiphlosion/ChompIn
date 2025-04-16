@@ -17,7 +17,7 @@ export default function Topbar() {
                 />
             </TouchableOpacity>
 
-            <TouchableOpacity>
+            <TouchableOpacity style={styles.helpIconContainer} onPress={() => navigation.navigate("feedback")}>
                 <Image 
                 source={require('../assets/images/home/feedback.png')} 
                 style={styles.helpIcon}
@@ -51,11 +51,16 @@ const styles = StyleSheet.create({
         fontWeight: "bold",
         color: "white",
     },
+    helpIconContainer: {
+        height: "100%",
+        justifyContent: "center",
+        alignItems: "center",
+        marginRight: 10,
+    },
     helpIcon:{
-        height: "80%",
+        height: "60%",
         aspectRatio: 1, 
         resizeMode: "contain",
-        marginRight: 10,
     },
     logoContainer: {
         alignItems: 'center',

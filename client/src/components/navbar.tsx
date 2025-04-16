@@ -3,7 +3,7 @@ import { View, Dimensions, StyleSheet, Image, TouchableOpacity } from "react-nat
 import HomeScreen from "../screens/home";
 import ScanScreen from "../screens/scan";
 import ClassScreen from "../screens/classes";
-import LeaderboardScreen from "../screens/leaderboards";
+import AnalyticsScreen from "../screens/analytics";
 import SettingScreen from "../screens/settings";
 import { NavigationProp } from "@react-navigation/native";
 import { RootStackParamList } from "@/types/types";
@@ -31,7 +31,7 @@ export default function Navbar({ navigation }: NavbarProps) {
             <TouchableOpacity onPress={() => navigation.navigate("class")}>
                 <Image source={require("../assets/images/home/classroom.png")} style={styles.icon} />
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.navigate("leaderboard")}>
+            <TouchableOpacity onPress={() => navigation.navigate("analytics")}>
                 <Image source={require("../assets/images/home/stat-icon.png")} style={styles.icon} />
             </TouchableOpacity>
             {/* Settings */}

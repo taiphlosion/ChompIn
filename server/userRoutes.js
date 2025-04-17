@@ -27,34 +27,53 @@ router.get("/classrooms", verifyToken, authorizeRoles("professor"), async (req, 
 // "canvas_course_id": null,
 //         "canvas_assignment_id": null
 
+router.post(
+  "/create-classroom",
+  verifyToken,
+  authorizeRoles("professor"),
+  async (req, res) => {
+    try {
+      const {
+        className,
+        daysOfWeek,
+        timeBlockId,
+        startDate,
+        endDate,
+      } = req.body;
 
-router.post("/create-classroom", verifyToken, authorizeRoles("professor"), async (req, res) => {
-  try {
-    const { className } = req.body;
+      // Validate required fields
+      if (!className || !Array.isArray(daysOfWeek) || !timeBlockId || !startDate || !endDate) {
+        return res.status(400).json({
+          error: "Missing required fields: className, daysOfWeek[], timeBlockId, startDate, endDate",
+        });
+      }
 
-    if (!className) {
-      return res.status(400).json({ error: "Class name is required" });
+      if (!req.user?.id) {
+        return res
+          .status(401)
+          .json({ error: "Unauthorized: User ID is missing" });
+      }
+
+      const result = await pool.query(
+        `INSERT INTO classrooms 
+          (professor_id, class_name, days_of_week, time_block_id, start_date, end_date)
+         VALUES 
+          ($1, $2, $3, $4, $5, $6)
+         RETURNING *`,
+        [req.user.id, className, daysOfWeek, timeBlockId, startDate, endDate]
+      );
+
+      res.status(201).json({
+        message: "Classroom created successfully",
+        classroom: result.rows[0],
+      });
+    } catch (err) {
+      console.error("Error creating classroom:", err);
+      res.status(500).json({ error: "Failed to create classroom" });
     }
-
-    console.log("req user", req.user);
-    console.log("prefessor_id", req.user?.id);
-
-    if (!req.user?.id) {
-      return res.status(401).json({ error: "Unauthorized: User ID is missing" });
-    }
-
-    // Insert the new classroom into the database
-    const result = await pool.query(
-      "INSERT INTO classrooms (professor_id, class_name) VALUES ($1, $2) RETURNING *",
-      [req.user.id, className]
-    );
-
-    res.status(201).json({ message: "Classroom created successfully", classroom: result.rows[0] });
-  } catch (err) {
-    console.error("Error creating classroom:", err);
-    res.status(500).json({ error: "Failed to create classroom" });
   }
-});
+);
+
 
 router.post(
   "/generate-qr",

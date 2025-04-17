@@ -73,9 +73,7 @@ export default function Home() {
   );
 
   const handleQRCreation = async () => {
-    if (!selectedClass?.id) {
-      return;
-    }
+    if (!selectedClass?.id) { return; }
 
     setIsLoading(true);
     const classId = selectedClass.id;
@@ -214,7 +212,7 @@ export default function Home() {
                         setTimeout(() => handleQRCreation(), 100);
                       }}
                     >
-                      <Text style={styles.quickGenerateText}>Quick QR</Text>
+                      <Ionicons name="qr-code" size={20} color="#333" />
                     </TouchableOpacity>
                   </View>
                 </TouchableOpacity>

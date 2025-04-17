@@ -1,24 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ActivityIndicator, 
-  FlatList, 
-  TextInput, 
-  TouchableOpacity,
-  ScrollView,
-  Image,
-  Modal,
-  Alert
-} from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator, FlatList, TextInput, TouchableOpacity,ScrollView,Image,Modal,Alert } from "react-native";
+import { SelectList } from 'react-native-dropdown-select-list';
 import { useNavigation, NavigationProp } from "@react-navigation/native";
-import Navbar from '@/components/navbar';
-import Topbar from '@/components/topbar';
 import { RootStackParamList } from "@/types/types"; 
 import { useUserContext } from "@/context/user";
 import { Ionicons } from '@expo/vector-icons';
 import Constants from "expo-constants";
+import Navbar from '@/components/navbar';
+import Topbar from '@/components/topbar';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 const API_URL = Constants.expoConfig?.extra?.API_URL || "http://localhost:5000";
 
@@ -30,24 +20,54 @@ const MOCK_ENROLLED_CLASSES = [
   { id: 4, class_name: "Database Management", professor: "Dr. Brown", attendance_rate: 78 },
 ];
 
+const timeBlocks = [
+    { key: '1', value: '7:25 AM - 8:15 AM' },
+    { key: '2', value: '8:30 AM - 9:20 AM' },
+    { key: '3', value: '9:35 AM - 10:25 AM' },
+    { key: '4', value: '10:40 AM - 11:30 AM' },
+    { key: '5', value: '11:45 AM - 12:35 PM' },
+    { key: '6', value: '12:50 PM - 1:40 PM' },
+    { key: '7', value: '1:55 PM - 2:45 PM' },
+    { key: '8', value: '3:00 PM - 3:50 PM' },
+    { key: '9', value: '4:05 PM - 4:55 PM' },
+    { key: '10', value: '5:10 PM - 6:00 PM' },
+    { key: '11', value: '6:15 PM - 7:05 PM' },
+];
+
 export default function ClassScreen() {
     const navigation = useNavigation<NavigationProp<RootStackParamList>>();
     const { user } = useUserContext();
-    const [classes, setClasses] = useState<
-    { class_name: string; id: number; professor_id: number }[]
-    >([]);
+    interface Class {
+        id: number;
+        professor_id: number;
+        class_name: string;
+        days_of_week: string[]; // matches the backend format
+        start_date: string; // ISO string from the backend
+        end_date: string;   // ISO string from the backend
+        time_block_id: number;
+    }
+    const [classes, setClasses] = useState<Class[]>([]);
+      
     const [loading, setLoading] = useState(true);
     const [modalVisible, setModalVisible] = useState(false);
     const [className, setClassName] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedClass, setSelectedClass] = useState<number | null>(null);
+    const [selectedDays, setSelectedDays] = useState<string[]>([]);
+    const [startDate, setStartDate] = useState<Date | null>(null);
+    const [endDate, setEndDate] = useState<Date | null>(null);
+    const [selectedTimeBlock, setSelectedTimeBlock] = useState<number | null>(null);
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+    const [startDatePickerVisible, setStartDatePickerVisible] = useState(false);
+    const [endDatePickerVisible, setEndDatePickerVisible] = useState(false);
+      const [isLoading, setIsLoading] = useState(false);
     
     // For student view
     const [enrollModalVisible, setEnrollModalVisible] = useState(false);
     const [classCode, setClassCode] = useState("");
 
+    // API route to fetch classroom of professor
     const classList = async () => {
         try {
             setLoading(true);
@@ -57,6 +77,7 @@ export default function ClassScreen() {
             });
             if (response.ok) {
                 const data = await response.json();
+                // console.log("API response:", data);
                 setClasses(data);
             }
         } 
@@ -64,25 +85,54 @@ export default function ClassScreen() {
         finally { setLoading(false); }
     };
 
+    // POST API to create a new class
     const createClass = async () => {
         if (!className.trim()){
             Alert.alert("Error", "Please enter a class name.");
             return;
         }
+        if (selectedDays.length === 0) {
+            Alert.alert("Error", "Please select at least one day.");
+            return;
+        }
+        if (!selectedTimeBlock) {
+            Alert.alert("Error", "Please select a time block.");
+            return;
+        }
+        if (!startDate || !endDate) {
+            Alert.alert("Error", "Please select both start and end dates.");
+            return;
+        }
+        if (endDate < startDate) {
+            Alert.alert("Error", "End date cannot be before start date.");
+            return;
+        }
+
         try{
+            
             setIsSubmitting(true);
             const response = await fetch(`${API_URL}/api/user/create-classroom`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
                 body: JSON.stringify({ 
-                    className: className 
+                    className: className, 
+                    daysOfWeek: selectedDays,
+                    timeBlockId: selectedTimeBlock,
+                    startDate: startDate,
+                    endDate: endDate
                 }),
             });
+
             if (response.ok) {
                 const data = await response.json();
+                // console.log("Class created:", data);
                 setClasses((prevClasses) => [...prevClasses, data.classroom]);
                 setClassName("");
+                setSelectedDays([]);
+                setSelectedTimeBlock(null);
+                setStartDate(null);
+                setEndDate(null);
                 setModalVisible(false);
                 Alert.alert("Success", "Class created successfully!");
             } 
@@ -92,52 +142,89 @@ export default function ClassScreen() {
         finally { setIsSubmitting(false); }
     };
 
-    const deleteClass = async () => {
-        if (!selectedClass) return;
-        
-        // Mock implementation for now
-        setClasses(classes.filter(c => c.id !== selectedClass));
-        setDeleteModalVisible(false);
-        setSelectedClass(null);
-        Alert.alert("Success", "Class deleted successfully!");
+    const handleQRCreation = async (classId: number) => {
+        setIsLoading(true);
+    
+        try {
+          const response = await fetch(`${API_URL}/api/user/generate-qr`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ classroom_id: classId }),
+            credentials: "include",
+          });
+          if (response.ok) {
+            const data = await response.json();
+            navigation.navigate("scan", { qrCode: data.qrImage });
+          }
+        } 
+        catch (error) { console.log(error); } 
+        finally { setIsLoading(false); }
     };
 
-    const enrollInClass = () => {
-        // For now, just show a success message
-        if (!classCode.trim()) {
-            Alert.alert("Error", "Please enter a class code");
-            return;
-        }
+    const getTimeBlockLabel = (timeBlockId: number | null | undefined) => {
+        // console.log("Time Block ID:", timeBlockId);
         
-        setEnrollModalVisible(false);
-        setClassCode("");
-        Alert.alert("Success", "Successfully enrolled in class!");
+        // Handle null, undefined, 0, NaN, etc.
+        if (!timeBlockId && timeBlockId !== 0) return 'Not set';
+        
+        const timeBlock = timeBlocks.find(block => parseInt(block.key) === timeBlockId);
+        if (timeBlock) { return timeBlock.value; } 
+        else {
+            // console.log("No timeBlock found for ID:", timeBlockId);
+            return `Block ${timeBlockId}`;
+        }
     };
+
+    //   MAYBE HAVE SOMETHING TO DELETE CLASS
+
+    // const enrollInClass = () => {
+    //     // For now, just show a success message
+    //     if (!classCode.trim()) {
+    //         Alert.alert("Error", "Please enter a class code");
+    //         return;
+    //     }
+        
+    //     setEnrollModalVisible(false);
+    //     setClassCode("");
+    //     Alert.alert("Success", "Successfully enrolled in class!");
+    // };
 
     useEffect(() => { 
-        if (user?.role === "professor") {
-            classList(); 
-        } 
+        if (user?.role === "professor") { classList(); } 
         else {
             // For student view, we'll use the mock data
             setLoading(false);
         }
     }, [user?.role]);
 
-    // Filter classes based on search term
-    const filteredClasses = user?.role === "professor" 
-        ? classes
-            .filter(c => c.class_name.toLowerCase().includes(searchTerm.toLowerCase()))
-            .map(c => ({
-                id: c.id,
-                class_name: c.class_name,
-                professor: "N/A", // Placeholder for professor
-                attendance_rate: 0, // Placeholder for attendance rate
-            }))
-        : MOCK_ENROLLED_CLASSES.filter(c => 
-            c.class_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            c.professor.toLowerCase().includes(searchTerm.toLowerCase()));
+    //Helper function to toggle selected days
+    const toggleDaySelection = (day: string) => {
+        if (selectedDays.includes(day)) {setSelectedDays(selectedDays.filter(d => d !== day)); } 
+        else { setSelectedDays([...selectedDays, day]); }
+    };
 
+    // Filter classes based on search term
+    const filteredClasses = classes
+    .filter((c) => {
+      const nameMatch = c.class_name.toLowerCase().includes(searchTerm.toLowerCase());
+      // professor is no longer in the Class interface, so we disable this unless you add it back
+      const profMatch = false; // or use actual logic if you reintroduce `professor`
+      return user?.role === "professor" ? nameMatch : nameMatch || profMatch;
+    })
+    .map((c) => ({
+      id: c.id,
+      classData: {
+        professor_id: c.professor_id,
+        class_name: c.class_name,
+        daysOfWeek: c.days_of_week || [],
+        timeBlock: c.time_block_id,
+        startDate: c.start_date || null,
+        endDate: c.end_date || null,
+      },
+    }));
+  
     const renderProfessorView = () => {
         if (loading) {
             return (
@@ -182,11 +269,6 @@ export default function ClassScreen() {
 
                 {classes.length === 0 ? (
                     <View style={styles.emptyStateContainer}>
-                        <Image 
-                            source={require("../assets/images/home/logo-with-name.png")} 
-                            style={styles.emptyStateImage}
-                            resizeMode="contain"
-                        />
                         <Text style={styles.emptyStateTitle}>No Classes Found</Text>
                         <Text style={styles.emptyStateText}>
                             You don't have any classes yet. Create your first class to get started.
@@ -211,44 +293,38 @@ export default function ClassScreen() {
                                     <View style={styles.classCardContent}>
                                         <View style={styles.classIconContainer}>
                                             <Text style={styles.classIconText}>
-                                                {item.class_name.charAt(0).toUpperCase()}
+                                                {item.classData.class_name.charAt(0).toUpperCase()}
                                             </Text>
                                         </View>
                                         <View style={styles.classInfo}>
-                                            <Text style={styles.className}>{item.class_name}</Text>
-                                            <Text style={styles.classId}>ID: {item.id}</Text>
+                                            <Text style={styles.className}>{item.classData.class_name}</Text>
+                                            <View style={styles.scheduleInfoRow}>
+                                                <Text style={styles.scheduleLabel}>ID</Text>
+                                                <Text style={styles.scheduleValue}>{item.id}</Text>
+                                            </View>
+                                            <View style={styles.scheduleInfoRow}>
+                                                <Text style={styles.scheduleLabel}>Day</Text>
+                                                <Text style={styles.scheduleValue}>
+                                                    {item.classData.daysOfWeek?.length
+                                                    ? item.classData.daysOfWeek.join(', ')
+                                                    : 'Not scheduled'}
+                                                </Text>
+                                            </View>
+                                            <View style={styles.scheduleInfoRow}>
+                                                <Text style={styles.scheduleLabel}>Time</Text>
+                                                <Text style={styles.scheduleValue}>
+                                                    {getTimeBlockLabel(item.classData.timeBlock)}
+                                                </Text>
+                                            </View>
                                         </View>
                                     </View>
                                     
                                     <View style={styles.classActions}>
                                         <TouchableOpacity 
                                             style={styles.classActionButton}
-                                            onPress={() => {
-                                                // Navigate to QR generation
-                                                navigation.navigate("home");
-                                            }}
+                                            onPress={() => { handleQRCreation(item.id);}}
                                         >
                                             <Ionicons name="qr-code" size={20} color="#333" />
-                                        </TouchableOpacity>
-                                        
-                                        <TouchableOpacity 
-                                            style={styles.classActionButton}
-                                            onPress={() => {
-                                                // Navigate to analytics for this class
-                                                navigation.navigate("analytics");
-                                            }}
-                                        >
-                                            <Ionicons name="bar-chart" size={20} color="#333" />
-                                        </TouchableOpacity>
-                                        
-                                        <TouchableOpacity 
-                                            style={[styles.classActionButton, styles.deleteButton]}
-                                            onPress={() => {
-                                                setSelectedClass(item.id);
-                                                setDeleteModalVisible(true);
-                                            }}
-                                        >
-                                            <Ionicons name="trash" size={20} color="#ff3b30" />
                                         </TouchableOpacity>
                                     </View>
                                 </View>
@@ -260,8 +336,6 @@ export default function ClassScreen() {
                     </>
                 )}
                 
-                {/* TODO: Update form to reflect new tables */}
-                {/* Create Class Modal */}
                 <Modal
                     animationType="slide"
                     transparent={true}
@@ -280,6 +354,7 @@ export default function ClassScreen() {
                                 </TouchableOpacity>
                             </View>
                             
+                            {/* Class Name Input */}
                             <Text style={styles.inputLabel}>Class Name</Text>
                             <TextInput
                                 style={styles.modalInput}
@@ -287,6 +362,136 @@ export default function ClassScreen() {
                                 value={className}
                                 onChangeText={setClassName}
                             />
+
+                            {/* Days of week class happens */}
+                            <Text style={styles.inputLabel}>Days of Week</Text>
+                            <View style={styles.dayPickerContainer}>
+                                {['M', 'T', 'W', 'Th', 'F'].map((day) => (
+                                    <TouchableOpacity 
+                                        key={day}
+                                        style={[
+                                            styles.dayButton,
+                                            selectedDays.includes(day) && styles.dayButtonSelected
+                                        ]}
+                                        onPress={() => toggleDaySelection(day)}
+                                    >
+                                        <Text 
+                                            style={[
+                                                styles.dayButtonText,
+                                                selectedDays.includes(day) && styles.dayButtonTextSelected
+                                            ]}
+                                        >
+                                            {day}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+
+                            <Text style={styles.inputLabel}>Time Block</Text>
+                            <SelectList
+                                setSelected={(val: string) => setSelectedTimeBlock(parseInt(val))}
+                                data={timeBlocks}
+                                save="key"
+                                boxStyles={styles.selectBox}
+                                dropdownStyles={styles.dropdownBox}
+                                placeholder="Select class time"
+                            />
+
+                            <View style={styles.dateRow}>
+                                <View style={styles.dateColumn}>
+                                    <Text style={styles.inputLabel}>Start Date</Text>
+                                    <TouchableOpacity 
+                                        style={styles.dateButton}
+                                        onPress={() => setStartDatePickerVisible(true)}
+                                    >
+                                        <Text style={styles.dateButtonText}>
+                                            {startDate ? startDate.toLocaleDateString() : "Select start date"}
+                                        </Text>
+                                    </TouchableOpacity>
+                                </View>
+                                
+                                <View style={styles.dateColumn}>
+                                    <Text style={styles.inputLabel}>End Date</Text>
+                                    <TouchableOpacity 
+                                        style={styles.dateButton}
+                                        onPress={() => setEndDatePickerVisible(true)}
+                                    >
+                                        <Text style={styles.dateButtonText}>
+                                            {endDate ? endDate.toLocaleDateString() : "Select end date"}
+                                        </Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+
+                            {/* Start Date Picker Modal */}
+                            <Modal
+                                transparent={true}
+                                visible={startDatePickerVisible}
+                                animationType="slide"
+                                onRequestClose={() => setStartDatePickerVisible(false)}
+                            >
+                                <View style={styles.datePickerModalOverlay}>
+                                    <View style={styles.datePickerContainer}>
+                                        <View style={styles.datePickerHeader}>
+                                            <Text style={styles.datePickerTitle}>Select Start Date</Text>
+                                            <TouchableOpacity onPress={() => setStartDatePickerVisible(false)}>
+                                                <Ionicons name="close" size={24} color="#666" />
+                                            </TouchableOpacity>
+                                        </View>
+                                        <DateTimePicker
+                                            value={startDate || new Date()}
+                                            mode="date"
+                                            display="spinner"
+                                            onChange={(event, date) => {
+                                                if (date) setStartDate(date);
+                                            }}
+                                            style={styles.datePicker}
+                                        />
+                                        <TouchableOpacity 
+                                            style={styles.datePickerConfirmButton}
+                                            onPress={() => setStartDatePickerVisible(false)}
+                                        >
+                                            <Text style={styles.datePickerConfirmText}>Confirm</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                </View>
+                            </Modal>
+
+                            {/* End Date Picker Modal */}
+                            <Modal
+                                transparent={true}
+                                visible={endDatePickerVisible}
+                                animationType="slide"
+                                onRequestClose={() => setEndDatePickerVisible(false)}
+                            >
+                                <View style={styles.datePickerModalOverlay}>
+                                    <View style={styles.datePickerContainer}>
+                                        <View style={styles.datePickerHeader}>
+                                            <Text style={styles.datePickerTitle}>Select End Date</Text>
+                                            <TouchableOpacity onPress={() => setEndDatePickerVisible(false)}>
+                                                <Ionicons name="close" size={24} color="#666" />
+                                            </TouchableOpacity>
+                                        </View>
+                                        <DateTimePicker
+                                            value={endDate || new Date()}
+                                            mode="date"
+                                            display="spinner"
+                                            onChange={(event, date) => {
+                                                if (date) setEndDate(date);
+                                            }}
+                                            style={styles.datePicker}
+                                        />
+                                        <TouchableOpacity 
+                                            style={styles.datePickerConfirmButton}
+                                            onPress={() => setEndDatePickerVisible(false)}
+                                        >
+                                            <Text style={styles.datePickerConfirmText}>Confirm</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                </View>
+                            </Modal>
+
+
                             
                             <TouchableOpacity 
                                 style={[
@@ -307,7 +512,7 @@ export default function ClassScreen() {
                 </Modal>
                 
                 {/* Delete Confirmation Modal */}
-                <Modal
+                {/* <Modal
                     animationType="fade"
                     transparent={true}
                     visible={deleteModalVisible}
@@ -337,7 +542,7 @@ export default function ClassScreen() {
                             </View>
                         </View>
                     </View>
-                </Modal>
+                </Modal> */}
             </View>
         );
     };
@@ -415,16 +620,16 @@ export default function ClassScreen() {
                             <View style={styles.studentClassHeader}>
                                 <View style={styles.classIconContainer}>
                                     <Text style={styles.classIconText}>
-                                        {item.class_name.charAt(0).toUpperCase()}
+                                        {item.classData.class_name.charAt(0).toUpperCase()}
                                     </Text>
                                 </View>
                                 <View style={styles.studentClassInfo}>
-                                    <Text style={styles.className}>{item.class_name}</Text>
-                                    <Text style={styles.professorName}>{item.professor}</Text>
+                                    <Text style={styles.className}>{item.classData.class_name}</Text>
+                                    <Text style={styles.professorName}>{item.classData.professor_id}</Text>
                                 </View>
                             </View>
                             
-                            <View style={styles.attendanceContainer}>
+                            {/* <View style={styles.attendanceContainer}>
                                 <Text style={styles.attendanceLabel}>Attendance</Text>
                                 <View style={styles.attendanceBarContainer}>
                                     <View 
@@ -438,7 +643,7 @@ export default function ClassScreen() {
                                     />
                                     <Text style={styles.attendancePercent}>{item.attendance_rate}%</Text>
                                 </View>
-                            </View>
+                            </View> */}
                             {/* Debatable on if we want it to have this or not, maybe just a button to open the QR code scanner */}
                             {/* <View style={styles.studentClassActions}>
                                 <TouchableOpacity 
@@ -491,12 +696,12 @@ export default function ClassScreen() {
                                 onChangeText={setClassCode}
                             />
                             
-                            <TouchableOpacity 
+                            {/* <TouchableOpacity 
                                 style={styles.modalButton}
                                 onPress={enrollInClass}
                             >
                                 <Text style={styles.modalButtonText}>Enroll</Text>
-                            </TouchableOpacity>
+                            </TouchableOpacity> */}
                         </View>
                     </View>
                 </Modal>
@@ -958,5 +1163,118 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: "#333",
         marginLeft: 4,
+    },
+    dateButton: {
+        backgroundColor: '#f9f9f9',
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: 8,
+        padding: 12,
+        marginTop: 4,
+    },
+    dateButtonText: {
+        fontSize: 14,
+        color: '#333',
+    },
+    dayPickerContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 16,
+        marginTop: 4,
+    },
+    dayButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: '#f0f0f0',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#ddd',
+    },
+    dayButtonSelected: {
+        backgroundColor: '#4FEEAC',
+        borderColor: '#4FEEAC',
+    },
+    dayButtonText: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#666',
+    },
+    dayButtonTextSelected: {
+        color: '#333',
+    },
+    selectBox: {
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: 8,
+        marginBottom: 16,
+        marginTop: 4,
+    },
+    dropdownBox: {
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: 8,
+    },
+    dateRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 16,
+    },
+    dateColumn: {
+        width: '48%',
+    },
+    datePickerModalOverlay: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    datePickerContainer: {
+        backgroundColor: 'white',
+        borderRadius: 12,
+        padding: 20,
+        width: '80%',
+        alignItems: 'center',
+    },
+    datePickerHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        width: '100%',
+        marginBottom: 20,
+    },
+    datePickerTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#333',
+    },
+    datePicker: {
+        width: '100%',
+    },
+    datePickerConfirmButton: {
+        backgroundColor: '#4FEEAC',
+        paddingVertical: 10,
+        paddingHorizontal: 30,
+        borderRadius: 8,
+        marginTop: 20,
+    },
+    datePickerConfirmText: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#333',
+    },
+    scheduleInfoRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 2,
+    },
+    scheduleLabel: {
+        fontSize: 14,
+        fontWeight: "bold",
+        marginRight: 4,
+    },
+    scheduleValue: {
+        fontSize: 14,
     },
 });

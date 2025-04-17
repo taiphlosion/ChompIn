@@ -12,6 +12,14 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- TIME BLOCKS
+CREATE TABLE IF NOT EXISTS time_blocks (
+    id SERIAL PRIMARY KEY,
+    block_number INTEGER UNIQUE NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL
+);
+
 -- CLASSROOMS
 CREATE TABLE IF NOT EXISTS classrooms (
     id SERIAL PRIMARY KEY,
@@ -71,14 +79,6 @@ CREATE TABLE IF NOT EXISTS attendance_summary (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(student_id, classroom_id)
-);
-
--- TIME BLOCKS
-CREATE TABLE IF NOT EXISTS time_blocks (
-    id SERIAL PRIMARY KEY,
-    block_number INTEGER UNIQUE NOT NULL,
-    start_time TIME NOT NULL,
-    end_time TIME NOT NULL
 );
 
 ---------------------------------------------

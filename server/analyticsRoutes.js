@@ -8,41 +8,54 @@ const router = express.Router();
 
 // Get attendance statistics for all classes taught by the professor
 router.get("/class-attendance", verifyToken, authorizeRoles("professor"), async (req, res) => {
-    try {
-        const query = `
-            SELECT
+  try {
+    const query = `
+            WITH session_counts AS (
+            SELECT classroom_id, COUNT(*) AS sessions_count
+            FROM sessions
+            GROUP BY classroom_id
+        ),
+        attendance_rates AS (
+            SELECT 
+                classroom_id,
+                ROUND(AVG(
+                    (present_count + late_count * 0.8) * 100.0 / NULLIF(total_sessions, 0)
+                ), 2) AS attendance_rate
+            FROM attendance_summary
+            GROUP BY classroom_id
+        ),
+        enrollment_counts AS (
+            SELECT classroom_id, COUNT(*) AS enrolled_students
+            FROM enrollments
+            GROUP BY classroom_id
+        )
+        SELECT 
             c.id AS classroom_id,
             c.class_name,
-            COUNT(s.id) AS sessions_count,
-            COUNT(a.student_id) AS enrolled_students,
-            ROUND(AVG(
-                (a.present_count + a.late_count * 0.8) * 100.0 / NULLIF(a.total_sessions, 0)
-            ), 2) AS attendance_rate
-            FROM
-            classrooms c
-            LEFT JOIN sessions s ON c.id = s.classroom_id
-            LEFT JOIN attendance_summary a ON c.id = a.classroom_id
-            WHERE
-            c.professor_id = $1
-            GROUP BY
-            c.id, c.class_name
-            ORDER BY
-            c.class_name;
+            COALESCE(sc.sessions_count, 0) AS sessions_count,
+            COALESCE(ec.enrolled_students, 0) AS enrolled_students,
+            COALESCE(ar.attendance_rate, 0) AS attendance_rate
+        FROM classrooms c
+        LEFT JOIN session_counts sc ON c.id = sc.classroom_id
+        LEFT JOIN attendance_rates ar ON c.id = ar.classroom_id
+        LEFT JOIN enrollment_counts ec ON c.id = ec.classroom_id
+        WHERE c.professor_id = $1
+        ORDER BY c.class_name;
         `;
 
-        const result = await pool.query(query, [req.user.id]);
+    const result = await pool.query(query, [req.user.id]);
 
-        res.json(result.rows);
-    } catch (err) {
-        console.error("Error fetching class attendance:", err);
-        res.status(500).json({ error: "Failed to fetch class attendance" });
-    }
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching class attendance:", err);
+    res.status(500).json({ error: "Failed to fetch class attendance" });
+  }
 });
 
 // Get top attending students for professor's classes
 router.get("/top-students", verifyToken, authorizeRoles("professor"), async (req, res) => {
-    try {
-        const query = `
+  try {
+    const query = `
       SELECT 
         u.id,
         CONCAT(u.first_name, ' ', u.last_name) AS student_name,
@@ -67,52 +80,54 @@ router.get("/top-students", verifyToken, authorizeRoles("professor"), async (req
         LIMIT 10;
     `;
 
-        const result = await pool.query(query, [req.user.id]);
+    const result = await pool.query(query, [req.user.id]);
 
-        res.json(result.rows);
-    } catch (err) {
-        console.error("Error fetching top students:", err);
-        res.status(500).json({ error: "Failed to fetch top students" });
-    }
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching top students:", err);
+    res.status(500).json({ error: "Failed to fetch top students" });
+  }
 });
 
 // Student Routes
 
 // Get personal attendance statistics
 router.get("/personal-stats", verifyToken, authorizeRoles("student"), async (req, res) => {
-    try {
-        // Get basic stats
-        const statsQuery = `
+  try {
+    // Get basic stats
+    const statsQuery = `
       WITH student_classes AS (
-        SELECT classroom_id FROM enrollments WHERE student_id = $1
-        ),
-        relevant_sessions AS (
-        SELECT s.id FROM sessions s
-        JOIN student_classes sc ON sc.classroom_id = s.classroom_id
-        ),
-        attended_sessions AS (
-        SELECT COUNT(*) AS count FROM attendance WHERE student_id = $1
-        ),
-        total_sessions AS (
-        SELECT COUNT(*) AS total FROM relevant_sessions
-        )
-        SELECT 
-        (SELECT total FROM total_sessions) AS total_sessions,
-        (SELECT count FROM attended_sessions) AS attended_sessions,
-        CASE 
-            WHEN (SELECT total FROM total_sessions) = 0 THEN 0
-            ELSE (SELECT count FROM attended_sessions) * 100.0 / (SELECT total FROM total_sessions)
-        END AS attendance_rate;
+      SELECT classroom_id FROM enrollments WHERE student_id = $1
+    ),
+    relevant_sessions AS (
+      SELECT s.id FROM sessions s
+      JOIN student_classes sc ON sc.classroom_id = s.classroom_id
+    ),
+    attended_sessions AS (
+      SELECT COUNT(*) AS count 
+      FROM attendance 
+      WHERE student_id = $1 AND status IN ('present', 'late')
+    ),
+    total_sessions AS (
+      SELECT COUNT(*) AS total FROM relevant_sessions
+    )
+    SELECT 
+      (SELECT total FROM total_sessions) AS total_sessions,
+      (SELECT count FROM attended_sessions) AS attended_sessions,
+      CASE 
+        WHEN (SELECT total FROM total_sessions) = 0 THEN 0
+        ELSE (SELECT count FROM attended_sessions) * 100.0 / (SELECT total FROM total_sessions)
+      END AS attendance_rate;
     `;
 
-        const statsResult = await pool.query(statsQuery, [req.user.id]);
+    const statsResult = await pool.query(statsQuery, [req.user.id]);
 
-        // Calculate streaks
-        const streakQuery = `
+    // Calculate streaks
+    const streakQuery = `
       WITH attendance_dates AS (
         SELECT DISTINCT DATE(timestamp) AS att_date
         FROM attendance
-        WHERE student_id = $1
+        WHERE student_id = $1 AND status IN ('present', 'late')
         ORDER BY att_date
       ),
       date_groups AS (
@@ -136,27 +151,27 @@ router.get("/personal-stats", verifyToken, authorizeRoles("student"), async (req
         COALESCE((SELECT MAX(streak_length) FROM streaks), 0) AS longest_streak
     `;
 
-        const streakResult = await pool.query(streakQuery, [req.user.id]);
+    const streakResult = await pool.query(streakQuery, [req.user.id]);
 
-        // Combine results
-        const stats = {
-            ...statsResult.rows[0],
-            ...streakResult.rows[0]
-        };
+    // Combine results
+    const stats = {
+      ...statsResult.rows[0],
+      ...streakResult.rows[0]
+    };
 
-        res.json(stats);
-    } catch (err) {
-        console.error("Error fetching personal stats:", err);
-        res.status(500).json({ error: "Failed to fetch personal stats" });
-    }
+    res.json(stats);
+  } catch (err) {
+    console.error("Error fetching personal stats:", err);
+    res.status(500).json({ error: "Failed to fetch personal stats" });
+  }
 });
 
 router.get("/class-rank/:classroomId", verifyToken, authorizeRoles("student"), async (req, res) => {
-    try {
-        const { classroomId } = req.params;
-        const studentId = req.user.id;
+  try {
+    const { classroomId } = req.params;
+    const studentId = req.user.id;
 
-        const query = `
+    const query = `
         WITH ranked AS (
           SELECT 
             student_id,
@@ -170,17 +185,17 @@ router.get("/class-rank/:classroomId", verifyToken, authorizeRoles("student"), a
         SELECT rank FROM ranked WHERE student_id = $2
       `;
 
-        const result = await pool.query(query, [classroomId, studentId]);
+    const result = await pool.query(query, [classroomId, studentId]);
 
-        if (result.rows.length === 0) {
-            return res.json({ rank: null });
-        }
-
-        res.json({ rank: result.rows[0].rank });
-    } catch (err) {
-        console.error("Error fetching class rank:", err);
-        res.status(500).json({ error: "Failed to fetch class rank" });
+    if (result.rows.length === 0) {
+      return res.json({ rank: null });
     }
+
+    res.json({ rank: result.rows[0].rank });
+  } catch (err) {
+    console.error("Error fetching class rank:", err);
+    res.status(500).json({ error: "Failed to fetch class rank" });
+  }
 });
 
 module.exports = router;

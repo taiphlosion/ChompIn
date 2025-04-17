@@ -23,38 +23,118 @@ router.get("/classrooms", verifyToken, authorizeRoles("professor"), async (req, 
 });
 
 
+router.get(
+  "/classrooms/:id/upcoming-sessions",
+  verifyToken,
+  authorizeRoles("student", "professor"),
+  async (req, res) => {
+    const { id } = req.params;
+
+    try {
+      // Query classroom schedule + time block
+      const classroomQuery = `
+        SELECT 
+          c.days_of_week, 
+          c.start_date, 
+          c.end_date, 
+          tb.start_time, 
+          tb.end_time
+        FROM classrooms c
+        JOIN time_blocks tb ON c.time_block_id = tb.id
+        WHERE c.id = $1
+      `;
+
+      const { rows } = await pool.query(classroomQuery, [id]);
+
+      if (rows.length === 0) {
+        return res.status(404).json({ error: "Classroom not found" });
+      }
+
+      const { days_of_week, start_date, end_date, start_time, end_time } = rows[0];
+
+      const classDayMap = { S: 0, M: 1, T: 2, W: 3, R: 4, F: 5, U: 6 };
+      const dayNums = days_of_week.map((d) => classDayMap[d]);
+
+      const start = new Date(start_date);
+      const end = new Date(end_date);
+      const today = new Date();
+
+      const sessions = [];
+
+      for (
+        let d = new Date(Math.max(today.getTime(), start.getTime()));
+        d <= end;
+        d.setDate(d.getDate() + 1)
+      ) {
+        if (dayNums.includes(d.getDay())) {
+          sessions.push({
+            date: d.toISOString().slice(0, 10),
+            start_time,
+            end_time,
+          });
+        }
+      }
+
+      res.json({ sessions });
+    } catch (err) {
+      console.error("Error generating upcoming sessions:", err);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+
 // Need to fetch these fields (for now we just hard code them in)
 // "canvas_course_id": null,
 //         "canvas_assignment_id": null
 
+router.post(
+  "/create-classroom",
+  verifyToken,
+  authorizeRoles("professor"),
+  async (req, res) => {
+    try {
+      const {
+        className,
+        daysOfWeek,
+        timeBlockId,
+        startDate,
+        endDate,
+      } = req.body;
 
-router.post("/create-classroom", verifyToken, authorizeRoles("professor"), async (req, res) => {
-  try {
-    const { className } = req.body;
+      // Validate required fields
+      if (!className || !Array.isArray(daysOfWeek) || !timeBlockId || !startDate || !endDate) {
+        return res.status(400).json({
+          error: "Missing required fields: className, daysOfWeek[], timeBlockId, startDate, endDate",
+        });
+      }
 
-    if (!className) {
-      return res.status(400).json({ error: "Class name is required" });
+      if (!req.user?.id) {
+        return res
+          .status(401)
+          .json({ error: "Unauthorized: User ID is missing" });
+      }
+
+      const result = await pool.query(
+        `INSERT INTO classrooms 
+          (professor_id, class_name, days_of_week, time_block_id, start_date, end_date)
+         VALUES 
+          ($1, $2, $3, $4, $5, $6)
+         RETURNING *`,
+        [req.user.id, className, daysOfWeek, timeBlockId, startDate, endDate]
+      );
+
+      res.status(201).json({
+        message: "Classroom created successfully",
+        classroom: result.rows[0],
+      });
+    } catch (err) {
+      console.error("Error creating classroom:", err);
+      res.status(500).json({ error: "Failed to create classroom" });
     }
-
-    console.log("req user", req.user);
-    console.log("prefessor_id", req.user?.id);
-
-    if (!req.user?.id) {
-      return res.status(401).json({ error: "Unauthorized: User ID is missing" });
-    }
-
-    // Insert the new classroom into the database
-    const result = await pool.query(
-      "INSERT INTO classrooms (professor_id, class_name) VALUES ($1, $2) RETURNING *",
-      [req.user.id, className]
-    );
-
-    res.status(201).json({ message: "Classroom created successfully", classroom: result.rows[0] });
-  } catch (err) {
-    console.error("Error creating classroom:", err);
-    res.status(500).json({ error: "Failed to create classroom" });
   }
-});
+);
+
 
 router.post(
   "/generate-qr",

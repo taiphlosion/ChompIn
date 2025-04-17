@@ -37,6 +37,7 @@ export default function Leaderboard() {
     const navigation = useNavigation<NavigationProp<RootStackParamList>>();
     const { user } = useUserContext();
 
+    // TODO: Use routes to call class info here
     const renderProfessorView = () => {
         return (
             <View style={styles.container}>
@@ -69,7 +70,7 @@ export default function Leaderboard() {
                                 scrollEnabled={false}
                             />
                         </View>
-
+                        {/* TODO: Data from top students route are used here */}
                         <View style={styles.section}>
                             <Text style={styles.sectionTitle}>Top Attending Students</Text>
                             <FlatList
@@ -100,6 +101,7 @@ export default function Leaderboard() {
         );
     };
 
+    // TODO: Call personal stats route here and display info
     const renderStudentView = () => {
         return (
             <View style={styles.container}>

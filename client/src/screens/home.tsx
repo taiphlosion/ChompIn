@@ -314,7 +314,7 @@ export default function Home() {
               ))}
             </View>
           </View>
-          
+          {/* TODO: Use the upcoming-session routes here and show data */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Upcoming Sessions</Text>

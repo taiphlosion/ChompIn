@@ -260,6 +260,7 @@ export default function ClassScreen() {
                     </>
                 )}
                 
+                {/* TODO: Update form to reflect new tables */}
                 {/* Create Class Modal */}
                 <Modal
                     animationType="slide"
@@ -350,7 +351,7 @@ export default function ClassScreen() {
                 </View>
             );
         }
-
+        // TODO: Update to use the new fields of classroom (time blocks)
         return (
             <View style={styles.studentContentContainer}>
                 <View style={styles.studentHeader}>

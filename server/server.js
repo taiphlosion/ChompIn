@@ -21,6 +21,9 @@ app.use("/api/user/", userRoutes);
 const canvasRoutes = require("./canvasRoutes");
 app.use("/api/canvas", canvasRoutes);
 
+const analyticsRoutes = require("./analyticsRoutes");
+app.use("/api/analytics/", analyticsRoutes);
+
 app.get("/", (req, res) => {
   res.json({ message: "Hello from the backend!" });
 });

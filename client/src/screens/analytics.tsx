@@ -246,7 +246,6 @@ export default function Analytics() {
 
     const milestoneReached = ranks.some(r => r.rank && r.rank <= 3);
 
-    // TODO: Call personal stats route here and display info
     const renderStudentView = () => {
         return (
             <View style={styles.container}>
@@ -320,7 +319,7 @@ export default function Analytics() {
                                     <Text style={styles.milestoneIconText}>⭐</Text>
                                 </View>
                                 <View style={styles.milestoneInfo}>
-                                    <Text style={styles.milestoneName}>Perfect Month</Text>
+                                    <Text style={styles.milestoneName}>Perfect Month Goal</Text>
                                     <Text style={styles.milestoneProgress}>{personalStats?.current_streak}/30 days completed</Text>
                                     <View style={styles.milestoneProgressBar}>
                                         <View style={[styles.milestoneProgressFill, { width: `${((personalStats?.current_streak ?? 0) / 30) * 100}%` }]} />

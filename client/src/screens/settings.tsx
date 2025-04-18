@@ -1,6 +1,5 @@
 import React, { useEffect } from "react";
-import { View, Text, StyleSheet, Linking, ScrollView, Switch, TouchableOpacity } from "react-native";
-import { Button } from 'react-native-elements';
+import { View, Text, StyleSheet, Linking, ScrollView, TouchableOpacity, Modal, Image } from "react-native";
 import { useUserContext } from "@/context/user";
 import Constants from 'expo-constants';
 import { useNavigation, NavigationProp } from "@react-navigation/native";
@@ -8,7 +7,6 @@ import { RootStackParamList } from "@/types/types";
 import Navbar from '@/components/navbar';
 import Topbar from '@/components/topbar';
 import Icon from 'react-native-vector-icons/Ionicons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_URL = Constants.expoConfig?.extra?.API_URL || "http://localhost:5000";
 
@@ -16,39 +14,11 @@ export default function Setting() {
     const { user, setUser } = useUserContext();
     const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
-    const [notifications, setNotifications] = React.useState(true);
-    const [classReminders, setClassReminders] = React.useState(true);
+    const[aboutModalVisible, setAboutModalVisible] = React.useState(false);
 
-    useEffect(() => {
-        const loadSettings = async () => {
-            try {
-                const notificationsValue = await AsyncStorage.getItem("notifications");
-                const classRemindersValue = await AsyncStorage.getItem("classReminders");
+    const contactSupport = () => { Linking.openURL('mailto:mauriciodelcas30@gmail.com?subject=Chompin\' Support Request')};
 
-                if (notificationsValue !== null) { setNotifications(JSON.parse(notificationsValue)); }
-                if (classRemindersValue !== null) { setClassReminders(JSON.parse(classRemindersValue)); }
-            }
-            catch (error) { console.log("Error loading settings", error); }
-        }
-        loadSettings();
-    }, []);
-
-    const toggleNotifications = () => {
-        setNotifications(!notifications);
-        AsyncStorage.setItem("notifications", JSON.stringify(!notifications));
-    }
-
-    const toggleClassReminders = () => {
-        setClassReminders(!classReminders);
-        AsyncStorage.setItem("classReminders", JSON.stringify(!classReminders));
-    }
-
-    const contactSupport = () => { Linking.openURL('mailto:mauriciodelcas30@gmail.com?subject=ChompIn Support Request')};
-
-    const showAbout = () => { 
-        // Show about information in a modal or navigate to an about screen
-
-    };
+    const showAbout = () => { setAboutModalVisible(true) };
 
     const handleLogout = async () => {
         setUser(null);
@@ -94,7 +64,7 @@ export default function Setting() {
                     <TouchableOpacity style={styles.menuItem} onPress={showAbout}>
                         <View style={styles.menuItemContent}>
                             <Icon name="information-circle-outline" size={24} color="#333" />
-                            <Text style={styles.menuItemText}>About ChompIn</Text>
+                            <Text style={styles.menuItemText}>About Chompin'</Text>
                         </View>
                         <Icon name="chevron-forward" size={20} color="#ccc" />
                     </TouchableOpacity>
@@ -121,10 +91,66 @@ export default function Setting() {
                 </View>
                 
                 <View style={styles.versionContainer}>
-                    <Text style={styles.versionText}>Version 23423</Text>
+                    <Text style={styles.versionText}>Version 1</Text>
                 </View>
 
             </ScrollView>
+
+                        {/* About Modal */}
+                        <Modal
+                            animationType="fade"
+                            transparent={true}
+                            visible={aboutModalVisible}
+                            onRequestClose={() => setAboutModalVisible(false)}
+                        >
+                            <View style={styles.modalOverlay}>
+                                <View style={styles.aboutModalContent}>
+                                    <View style={styles.aboutHeader}>
+                                        <Text style={styles.aboutTitle}>About Chompin'</Text>
+                                        <TouchableOpacity 
+                                            onPress={() => setAboutModalVisible(false)}
+                                            style={styles.closeButton}
+                                        >
+                                            <Icon name="close" size={24} color="#666" />
+                                        </TouchableOpacity>
+                                    </View>
+                                    
+                                    <View style={styles.aboutLogoContainer}>
+                                        <Image 
+                                            source={require("../assets/images/home/logo-with-name.png")} 
+                                            style={styles.aboutLogo}
+                                            resizeMode="contain"
+                                        />
+                                    </View>
+                                    
+                                    <Text style={styles.aboutDescription}>
+                                        Chompin' is a comprehensive attendance tracking app designed for University of Florida students and faculty. Our app streamlines the classroom attendance process, bringing transparency and efficiency to academic tracking.
+                                    </Text>
+
+                                    <Text style={styles.aboutDescription}>
+                                        <Text style={{ fontWeight: 'bold' }}>Mauricio Del Castillo</Text> - Lead Backend Developer{"\n"}
+                                        <Text style={{ fontWeight: 'bold' }}>Tai Tran</Text> - Lead Frontend Developer{"\n"}
+                                        <Text style={{ fontWeight: 'bold' }}>Tech Bros for Life!!!</Text>
+                                    </Text>
+                                    
+                                    <Text style={styles.aboutVersion}>
+                                        Version 1.0.0
+                                    </Text>
+                                    
+                                    <Text style={styles.aboutCopyright}>
+                                        © 2025 Chompin' Team. All rights reserved.
+                                    </Text>
+                                    
+                                    <TouchableOpacity 
+                                        style={styles.closeModalButton}
+                                        onPress={() => setAboutModalVisible(false)}
+                                    >
+                                        <Text style={styles.closeModalButtonText}>Close</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </Modal>
+
 
             <Navbar navigation={navigation} />
         </View>
@@ -258,4 +284,77 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 16,
     },
+    // Modal styles
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    aboutModalContent: {
+        backgroundColor: '#fff',
+        borderRadius: 16,
+        padding: 20,
+        width: '85%',
+        maxHeight: '70%',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
+    },
+    aboutHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    aboutTitle: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        color: '#333',
+    },
+    closeButton: {
+        padding: 4,
+    },
+    aboutLogoContainer: {
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    aboutLogo: {
+        width: 200,
+        height: 100,
+    },
+    aboutDescription: {
+        fontSize: 16,
+        lineHeight: 24,
+        color: '#444',
+        marginBottom: 16,
+        textAlign: 'center',
+    },
+    aboutVersion: {
+        fontSize: 14,
+        color: '#666',
+        textAlign: 'center',
+        marginBottom: 8,
+    },
+    aboutCopyright: {
+        fontSize: 12,
+        color: '#888',
+        textAlign: 'center',
+        marginBottom: 16,
+    },
+    closeModalButton: {
+        backgroundColor: '#4FEEAC',
+        paddingVertical: 12,
+        paddingHorizontal: 24,
+        borderRadius: 8,
+        alignItems: 'center',
+        marginTop: 8,
+    },
+    closeModalButtonText: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#333',
+    }
 });

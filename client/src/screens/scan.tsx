@@ -208,28 +208,28 @@ export default function CameraScreen() {
                         <Ionicons name="refresh-outline" size={30} color={scanState.isProcessing ? "#999" : "#000"} />
                         <Text>Flip Camera</Text>
                     </TouchableOpacity>
-
-                    {/* Success or failure screen of scan. Resets evertyhing after scan again button pressed */}
-                    {!scanState.isScanning && !scanState.isProcessing && (
-                        <TouchableOpacity 
-                            style={styles.scanAgainButton}
-                            onPress={() => {
-                                // Reset both state and refs
-                                setScanState(prev => ({ 
-                                    ...prev, 
-                                    isScanning: true, 
-                                    message: "",
-                                    isProcessing: false 
-                                }));
-                                isProcessingRef.current = false;
-                                // Keep the last scanned code for a few seconds
-                                setTimeout(() => { lastScannedCode.current = "";}, 3000);
-                            }}
-                        >
-                            <Text style={styles.scanAgainText}>Scan Again</Text>
-                        </TouchableOpacity>
-                    )}
                 </View>
+                
+                {/* Success or failure screen of scan. Resets evertyhing after scan again button pressed */}
+                {!scanState.isScanning && !scanState.isProcessing && (
+                    <TouchableOpacity 
+                        style={styles.scanAgainButton}
+                        onPress={() => {
+                            // Reset both state and refs
+                            setScanState(prev => ({ 
+                                ...prev, 
+                                isScanning: true, 
+                                message: "",
+                                isProcessing: false 
+                            }));
+                            isProcessingRef.current = false;
+                            // Keep the last scanned code for a few seconds
+                            setTimeout(() => { lastScannedCode.current = "";}, 3000);
+                        }}
+                    >
+                        <Text style={styles.scanAgainText}>Scan Again</Text>
+                    </TouchableOpacity>
+                )}
                 <Navbar navigation={navigation} />
             </View>
         );

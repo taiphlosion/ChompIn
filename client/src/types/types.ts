@@ -13,7 +13,7 @@ export interface User {
     status: number;
   }
   
-  /** Add your navigation types */
+  /** navigation types */
   export type RootStackParamList = {
     login: undefined;
     signup: undefined;

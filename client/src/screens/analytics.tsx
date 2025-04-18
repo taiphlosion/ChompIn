@@ -58,8 +58,7 @@ export default function Analytics() {
             });
 
             if (response.ok){
-                const data = await response.json();
-                console.log("Class attendance data:", data);
+                const data = await response.json()
 
                 const formattedData = data.map((item: any) => ({
                     id: item.classroom_id,

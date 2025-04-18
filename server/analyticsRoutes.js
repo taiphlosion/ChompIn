@@ -198,4 +198,44 @@ router.get("/class-rank/:classroomId", verifyToken, authorizeRoles("student"), a
   }
 });
 
+// Get class info for a student
+router.get("/student-class-info", authenticateToken, async (req, res) => {
+  const studentId = req.user.id;
+
+  try {
+    const { rows } = await pool.query(`
+      SELECT 
+        classrooms.id AS classroom_id,
+        classrooms.class_name,
+        classrooms.professor_id,
+        CONCAT(prof.first_name, ' ', prof.last_name) AS professor_name,
+        COALESCE(summary.present_count, 0) AS present_count,
+        COALESCE(summary.late_count, 0) AS late_count,
+        COALESCE(summary.absent_count, 0) AS absent_count,
+        COALESCE(summary.total_sessions, 0) AS total_sessions,
+        ROUND(
+          CASE 
+            WHEN summary.total_sessions = 0 THEN 0 
+            ELSE 
+              (summary.present_count + summary.late_count * 0.5) * 100.0 / summary.total_sessions
+          END, 
+          1
+        ) AS attendance_rate
+      FROM enrollments
+      JOIN classrooms ON enrollments.classroom_id = classrooms.id
+      JOIN users AS prof ON classrooms.professor_id = prof.id
+      LEFT JOIN attendance_summary AS summary ON 
+        summary.student_id = enrollments.student_id AND 
+        summary.classroom_id = classrooms.id
+      WHERE enrollments.student_id = $1
+    `, [studentId]);
+
+    res.json({ classes: rows });
+  } catch (err) {
+    console.error("Error fetching student classes:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
 module.exports = router;

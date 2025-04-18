@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import { View, Text, StyleSheet, ActivityIndicator, FlatList, TextInput, TouchableOpacity, ScrollView, Image, Modal, Alert } from "react-native";
 import { useUserContext } from "@/context/user";
 import { useNavigation, NavigationProp, useFocusEffect } from "@react-navigation/native";
@@ -32,17 +32,45 @@ export default function Home() {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
   const [classes, setClasses] = useState<
-    { class_name: string; id: number; professor_id: number }[]
-  >([]);
+    { class_name: string; 
+      id: number; 
+      professor_id: number 
+    }[]>([]);
   const [selectedClass, setSelectedClass] = useState<{
     class_name: string;
     id: number;
     professor_id: number;
   } | null>(null);
+
+  const [studentClasses, setStudentClasses] = useState<{
+    id: number;
+    class_name: string;
+    start_date: string;
+    end_date: string;
+    start_time: string;
+    end_time: string;
+  }[]>([]);
+
+  const [attendanceSummary, setAttendanceSummary] = useState<{
+    total_sessions: number;
+    attended_sessions: number;
+    attendance_rate: number;
+    current_streak: number;
+    longest_streak: number;
+  }>({
+    total_sessions: 0,
+    attended_sessions: 0,
+    attendance_rate: 0,
+    current_streak: 0,
+    longest_streak: 0,
+  });
+  const [weekProgress, setWeekProgress] = useState<number>(0);
+  const [upcomingSessions, setUpcomingSessions] = useState<{ id: number; class_name: string; day: string; time: string; }[]>([]);
   
   // For animations and UI effects
   const [isLoading, setIsLoading] = useState(false);
 
+  //Professor function to fetch classes
   const classList = async () => {
     try {
       setIsLoading(true);
@@ -69,9 +97,59 @@ export default function Home() {
       if (user?.role === "professor") {
         classList();
       }
+      else{ 
+        fetchAttendanceSummary();
+        fetchMyClasses();
+      }
     }, [user])
   );
 
+  //Update the week's progress and upcoming classes for that student
+  useEffect(() => {
+    const updateWeekProgress = () => {
+      const currentDay = new Date().getDay();
+  
+      // Adjust for Monday (1) to Friday (5), clamp anything else to boundaries
+      const adjustedProgress =
+        currentDay === 0 ? 0 : // Sunday
+        currentDay > 5 ? 5 :   // Saturday
+        currentDay;
+  
+      setWeekProgress(adjustedProgress);
+    };
+  
+    const generateUpcomingSessions = () => {
+      if (studentClasses.length) {
+        const today = new Date();
+  
+        const sessions = studentClasses.map(cls => {
+          const startDate = new Date(cls.start_date);
+          const endDate = new Date(cls.end_date);
+  
+          // Use class start date or today, whichever is later
+          const nextDate = today > startDate ? today : startDate;
+  
+          return {
+            id: cls.id,
+            class_name: cls.class_name,
+            day: nextDate.toLocaleDateString(undefined, {
+              weekday: "short",
+              month: "short",
+              day: "numeric",
+            }),
+            time: `${cls.start_time.slice(0, 5)} - ${cls.end_time.slice(0, 5)}`,
+          };
+        });
+  
+        setUpcomingSessions(sessions);
+      }
+    };
+  
+    updateWeekProgress();
+    generateUpcomingSessions();
+  }, [studentClasses]);
+
+  //Post for QR code generation [professor]
   const handleQRCreation = async () => {
     if (!selectedClass?.id) { return; }
 
@@ -95,6 +173,68 @@ export default function Home() {
     catch (error) { console.log(error); } 
     finally { setIsLoading(false); }
   };
+
+  //Attendance summary for professors [professor]
+  const fetchAttendanceSummary = async () => {
+    if (user?.role !== "student") { return; }
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`${API_URL}/api/analytics/personal-stats`, {
+        method: "GET",
+        credentials: "include",
+      });
+      if (response.ok) {
+        const data = await response.json();
+
+        const formattedData = {
+          total_sessions: Number(data.total_sessions) || 0,
+          attended_sessions: Number(data.attended_sessions) || 0,
+          attendance_rate: Number(data.attendance_rate) || 0,
+          current_streak: Number(data.current_streak) || 0,
+          longest_streak: Number(data.longest_streak) || 0,
+        };
+        setAttendanceSummary(formattedData);
+      }
+    }
+    catch (error) { console.log(error); } 
+    finally { setIsLoading(false); }
+  };
+
+  //Fetch all classes students are enrolled in [student]
+  const fetchMyClasses = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/user/my-classes`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            credentials: 'include',
+          },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setStudentClasses(data.classes);
+      } 
+      else { console.error('Failed to fetch classes'); }
+    } 
+    catch (error) { console.error('Error fetching classes:', error); }
+  };
+
+  //Handle upcoming classes for students
+  // const fetchUpcomingClasses = async () => {
+  //   try {
+  //     const response = await fetch(`${API_URL}/api/user/my-next-sessions`, {
+  //       method: "GET",
+  //       credentials: "include",
+  //     });
+  //     if (response.ok) {
+  //       const data = await response.json();
+  //       setStudentClasses(data);
+  //     }
+  //   } 
+  //   catch (error) { console.log(error); }
+  // };
 
   const handleChompInPress = () => {
     navigation.navigate("scan", { qrCode: "" });
@@ -275,15 +415,15 @@ export default function Home() {
             <Text style={styles.sectionTitle}>Attendance Summary</Text>
             <View style={styles.summaryGrid}>
               <View style={styles.summaryItem}>
-                <Text style={styles.summaryValue}>{MOCK_ATTENDANCE_SUMMARY.total_classes}</Text>
+                <Text style={styles.summaryValue}>{studentClasses.length}</Text>
                 <Text style={styles.summaryLabel}>Classes</Text>
               </View>
               <View style={styles.summaryItem}>
-                <Text style={styles.summaryValue}>{MOCK_ATTENDANCE_SUMMARY.attended_sessions}/{MOCK_ATTENDANCE_SUMMARY.total_sessions}</Text>
+                <Text style={styles.summaryValue}>{attendanceSummary.attended_sessions}/{attendanceSummary.total_sessions}</Text>
                 <Text style={styles.summaryLabel}>Sessions</Text>
               </View>
               <View style={styles.summaryItem}>
-                <Text style={styles.summaryValue}>{MOCK_ATTENDANCE_SUMMARY.current_streak}</Text>
+                <Text style={styles.summaryValue}>{attendanceSummary.current_streak}</Text>
                 <Text style={styles.summaryLabel}>Day Streak</Text>
               </View>
             </View>
@@ -292,18 +432,18 @@ export default function Home() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>This Week's Progress</Text>
             <View style={styles.weekProgress}>
-              {['M', 'T', 'W', 'T', 'F'].map((day, index) => (
+              {['M', 'T', 'W', 'Th', 'F'].map((day, index) => (
                 <View 
                   key={day + index} 
                   style={[
                     styles.weekDay, 
-                    index < MOCK_ATTENDANCE_SUMMARY.week_progress ? styles.weekDayCompleted : {}
+                    index < weekProgress ? styles.weekDayCompleted : {}
                   ]}
                 >
                   <Text 
                     style={[
                       styles.weekDayText,
-                      index < MOCK_ATTENDANCE_SUMMARY.week_progress ? styles.weekDayTextCompleted : {}
+                      index < weekProgress ? styles.weekDayTextCompleted : {}
                     ]}
                   >
                     {day}
@@ -312,16 +452,12 @@ export default function Home() {
               ))}
             </View>
           </View>
-          {/* TODO: Use the upcoming-session routes here and show data */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Upcoming Sessions</Text>
-              <TouchableOpacity>
-                <Text style={styles.seeAllText}>See all</Text>
-              </TouchableOpacity>
             </View>
             
-            {MOCK_UPCOMING_SESSIONS.map(session => (
+            {upcomingSessions.map(session => (
               <View key={session.id} style={styles.sessionCard}>
                 <View style={styles.sessionTime}>
                   <Text style={styles.sessionDay}>{session.day}</Text>

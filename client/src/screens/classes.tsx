@@ -58,10 +58,18 @@ export default function ClassScreen() {
     const [startDate, setStartDate] = useState<Date | null>(null);
     const [endDate, setEndDate] = useState<Date | null>(null);
     const [selectedTimeBlock, setSelectedTimeBlock] = useState<number | null>(null);
-    const [deleteModalVisible, setDeleteModalVisible] = useState(false);
     const [startDatePickerVisible, setStartDatePickerVisible] = useState(false);
     const [endDatePickerVisible, setEndDatePickerVisible] = useState(false);
-      const [isLoading, setIsLoading] = useState(false);
+    interface StudentClass {
+        classroom_id: number;
+        class_name: string;
+        professor_name: string;
+        total_sessions: number;
+        present_count: number;
+        late_count: number;
+        attendance_rate: number;
+    }
+    const [studentClasses, setStudentClasses] = useState<StudentClass[]>([]);
     
     // For student view
     const [enrollModalVisible, setEnrollModalVisible] = useState(false);
@@ -143,7 +151,7 @@ export default function ClassScreen() {
     };
 
     const handleQRCreation = async (classId: number) => {
-        setIsLoading(true);
+        setLoading(true);
     
         try {
           const response = await fetch(`${API_URL}/api/user/generate-qr`, {
@@ -160,7 +168,7 @@ export default function ClassScreen() {
           }
         } 
         catch (error) { console.log(error); } 
-        finally { setIsLoading(false); }
+        finally { setLoading(false); }
     };
 
     const getTimeBlockLabel = (timeBlockId: number | null | undefined) => {
@@ -194,8 +202,22 @@ export default function ClassScreen() {
     useEffect(() => { 
         if (user?.role === "professor") { classList(); } 
         else {
-            // For student view, we'll use the mock data
-            setLoading(false);
+            const fetchStudentClassStats = async () => {
+                try {
+                    const response = await fetch(`${API_URL}/api/analytics/student-class-info`, {
+                        method: "GET",
+                        credentials: "include",
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log(data);
+                        setStudentClasses(data.classes);
+                    }
+                } 
+                catch (error) { console.log(error); }
+                finally { setLoading(false); }
+            };
+            fetchStudentClassStats();
         }
     }, [user?.role]);
 
@@ -209,7 +231,6 @@ export default function ClassScreen() {
     const filteredClasses = classes
     .filter((c) => {
       const nameMatch = c.class_name.toLowerCase().includes(searchTerm.toLowerCase());
-      // professor is no longer in the Class interface, so we disable this unless you add it back
       const profMatch = false; // or use actual logic if you reintroduce `professor`
       return user?.role === "professor" ? nameMatch : nameMatch || profMatch;
     })
@@ -556,7 +577,6 @@ export default function ClassScreen() {
                 </View>
             );
         }
-        // TODO: Update to use the new fields of classroom (time blocks)
         return (
             <View style={styles.studentContentContainer}>
                 <View style={styles.studentHeader}>
@@ -588,123 +608,47 @@ export default function ClassScreen() {
                         </TouchableOpacity>
                     )}
                 </View>
-                
-                <View style={styles.classStatsContainer}>
-                    <View style={styles.statCard}>
-                        <Text style={styles.statValue}>{MOCK_ENROLLED_CLASSES.length}</Text>
-                        <Text style={styles.statLabel}>Classes</Text>
-                    </View>
-                    <View style={styles.statCard}>
-                        <Text style={styles.statValue}>
-                            {(MOCK_ENROLLED_CLASSES.reduce((sum, cls) => sum + cls.attendance_rate, 0) / 
-                            MOCK_ENROLLED_CLASSES.length).toFixed(1)}%
-                        </Text>
-                        <Text style={styles.statLabel}>Avg. Attendance</Text>
-                    </View>
-                    <View style={styles.statCard}>
-                        <Text style={styles.statValue}>
-                            {MOCK_ENROLLED_CLASSES.filter(c => c.attendance_rate >= 90).length}
-                        </Text>
-                        <Text style={styles.statLabel}>Perfect Attendance</Text>
-                    </View>
-                </View>
 
                 <Text style={styles.listHeader}>
-                    {filteredClasses.length} {filteredClasses.length === 1 ? "Class" : "Classes"} {searchTerm ? "Found" : ""}
+                    {studentClasses.length} {studentClasses.length === 1 ? "Class" : "Classes"} {searchTerm ? "Found" : ""}
                 </Text>
                 
                 <FlatList
-                    data={filteredClasses}
+                    data={studentClasses.filter(cls =>
+                        cls.class_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        (cls.professor_name || "").toLowerCase().includes(searchTerm.toLowerCase())
+                    )}
                     renderItem={({ item }) => (
                         <View style={styles.studentClassCard}>
                             <View style={styles.studentClassHeader}>
                                 <View style={styles.classIconContainer}>
                                     <Text style={styles.classIconText}>
-                                        {item.classData.class_name.charAt(0).toUpperCase()}
+                                        {item.class_name.substring(0, 3).toUpperCase()}
                                     </Text>
                                 </View>
                                 <View style={styles.studentClassInfo}>
-                                    <Text style={styles.className}>{item.classData.class_name}</Text>
-                                    <Text style={styles.professorName}>{item.classData.professor_id}</Text>
+                                    <Text style={styles.className}>{item.class_name}</Text>
+                                    <Text style={styles.professorName}>{item.professor_name}</Text>
                                 </View>
                             </View>
-                            
-                            {/* <View style={styles.attendanceContainer}>
-                                <Text style={styles.attendanceLabel}>Attendance</Text>
-                                <View style={styles.attendanceBarContainer}>
-                                    <View 
-                                        style={[
-                                            styles.attendanceBar, 
-                                            { width: `${item.attendance_rate}%` },
-                                            item.attendance_rate >= 90 ? styles.attendanceExcellent :
-                                            item.attendance_rate >= 80 ? styles.attendanceGood :
-                                            styles.attendanceNeeds
-                                        ]} 
-                                    />
-                                    <Text style={styles.attendancePercent}>{item.attendance_rate}%</Text>
-                                </View>
-                            </View> */}
-                            {/* Debatable on if we want it to have this or not, maybe just a button to open the QR code scanner */}
-                            {/* <View style={styles.studentClassActions}>
-                                <TouchableOpacity 
-                                    style={styles.studentClassButton}
-                                    onPress={() => navigation.navigate("scan", { qrCode: "" })}
-                                >
-                                    <Ionicons name="scan" size={16} color="#333" />
-                                    <Text style={styles.studentClassButtonText}>Scan QR</Text>
-                                </TouchableOpacity>
-                                
-                                <TouchableOpacity 
-                                    style={styles.studentClassButton}
-                                    onPress={() => navigation.navigate("analytics")}
-                                >
-                                    <Ionicons name="trophy" size={16} color="#333" />
-                                    <Text style={styles.studentClassButtonText}>Leaderboard</Text>
-                                </TouchableOpacity>
-                            </View> */}
+
+                            <View style={styles.classDetailsContainer}>
+                                <Text style={styles.classDetailsText}>
+                                    <Text style={styles.detailsLabel}>Total Sessions:</Text> {item.total_sessions}
+                                </Text>
+                                <Text style={styles.classDetailsText}>
+                                    <Text style={styles.detailsLabel}>Present + Late:</Text> {item.present_count + item.late_count}
+                                </Text>
+                                <Text style={styles.classDetailsText}>
+                                    <Text style={styles.detailsLabel}>Attendance Rate:</Text> {item.attendance_rate}%
+                                </Text>
+                            </View>
                         </View>
                     )}
-                    keyExtractor={(item) => item.id.toString()}
+                    keyExtractor={(item) => item.classroom_id.toString()}
                     contentContainerStyle={styles.classesList}
                     showsVerticalScrollIndicator={false}
                 />
-                
-                {/* Enroll in Class Modal */}
-                <Modal
-                    animationType="slide"
-                    transparent={true}
-                    visible={enrollModalVisible}
-                    onRequestClose={() => setEnrollModalVisible(false)}
-                >
-                    <View style={styles.modalOverlay}>
-                        <View style={styles.modalContent}>
-                            <View style={styles.modalHeader}>
-                                <Text style={styles.modalTitle}>Enroll in Class</Text>
-                                <TouchableOpacity 
-                                    onPress={() => setEnrollModalVisible(false)}
-                                    style={styles.modalCloseButton}
-                                >
-                                    <Ionicons name="close" size={24} color="#666" />
-                                </TouchableOpacity>
-                            </View>
-                            
-                            <Text style={styles.inputLabel}>Class Code</Text>
-                            <TextInput
-                                style={styles.modalInput}
-                                placeholder="Enter class code"
-                                value={classCode}
-                                onChangeText={setClassCode}
-                            />
-                            
-                            {/* <TouchableOpacity 
-                                style={styles.modalButton}
-                                onPress={enrollInClass}
-                            >
-                                <Text style={styles.modalButtonText}>Enroll</Text>
-                            </TouchableOpacity> */}
-                        </View>
-                    </View>
-                </Modal>
             </View>
         );
     };
@@ -1276,5 +1220,19 @@ const styles = StyleSheet.create({
     },
     scheduleValue: {
         fontSize: 14,
+    },
+    classDetailsContainer: {
+        marginTop: 10,
+        borderTopWidth: 1,
+        borderTopColor: '#f0f0f0',
+        paddingTop: 10,
+    },
+    classDetailsText: {
+        fontSize: 14,
+        color: '#333',
+        marginBottom: 8,
+    },
+    detailsLabel: {
+        fontWeight: 'bold',
     },
 });

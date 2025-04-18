@@ -7,32 +7,6 @@ import Navbar from '@/components/navbar';
 import Constants from "expo-constants";
 import Topbar from '@/components/topbar';
 
-// // Placeholder data for professor view
-// const MOCK_CLASS_STATS = [
-//   { id: 1, class_name: "Introduction to Computer Science", sessions_count: 24, attendance_rate: 87.5 },
-//   { id: 2, class_name: "Data Structures and Algorithms", sessions_count: 18, attendance_rate: 92.3 },
-//   { id: 3, class_name: "Mobile App Development", sessions_count: 15, attendance_rate: 76.8 },
-// ];
-
-// const MOCK_TOP_STUDENTS = [
-//   { id: 1, student_name: "Alex Johnson", attendance_count: 57, attendance_rate: 100 },
-//   { id: 2, student_name: "Jamie Smith", attendance_count: 56, attendance_rate: 98.2 },
-//   { id: 3, student_name: "Taylor Wilson", attendance_count: 55, attendance_rate: 96.5 },
-//   { id: 4, student_name: "Morgan Lee", attendance_count: 53, attendance_rate: 93.0 },
-//   { id: 5, student_name: "Casey Brown", attendance_count: 51, attendance_rate: 89.5 },
-// ];
-
-// // Placeholder data for student view
-const MOCK_PERSONAL_STATS = {
-  total_sessions: 57,
-  attended_sessions: 52,
-  attendance_rate: 91.2,
-  current_streak: 8,
-  longest_streak: 14
-};
-
-const MOCK_CLASS_RANK = 7;
-
 const API_URL = Constants.expoConfig?.extra?.API_URL || "http://localhost:5000";
 
 export default function Analytics() {
@@ -41,9 +15,10 @@ export default function Analytics() {
     const { user } = useUserContext();
     const [classAttendanceData, setClassAttendanceData] = useState<{ id: number; class_name: string; sessions_count: number; attendance_rate: number; }[]>([]);
     const [topStudentsData, setTopStudentsData] = useState<{ id: number; student_name: string; attendance_count: number; attendance_rate: number; }[]>([]);
-    const [personalStatsData, setPersonalStatsData] = useState([]);
+    const [personalStats, setPersonalStats] = useState<{ attendance_rate: number; total_sessions: number; attended_sessions: number; current_streak: number; longest_streak: number; } | null>(null);
+    const [ranks, setRanks] = useState<{ class_name: string; rank: number; }[]>([]);
 
-    // Fetch class attendance data /api/analytics/class-attendance
+    // Fetch class attendance data /api/analytics/class-attendance [professor]
     const fetchClassAttendanceData = async () => {
         if (user?.role !== "professor") { return; }
         setIsLoadingAttendanceData(true);
@@ -80,7 +55,7 @@ export default function Analytics() {
         finally{ setIsLoadingAttendanceData(false); }
     };
 
-    // Fetch top students data /api/analytics/top-students
+    // Fetch top students data /api/analytics/top-students [professor]
     const fetchTopStudentsData = async () => {
         if (user?.role !== "professor") { return; }
         try {
@@ -117,10 +92,82 @@ export default function Analytics() {
         catch (error) { console.error("Error fetching top students data:", error); }
     };
 
+    // Fetch personal stats data /api/analytics/personal-stats [student]
+    const fetchPersonalStatsData = async () => {
+        try{
+            const response = await fetch(`${API_URL}/api/analytics/personal-stats`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    credentials: "include"
+                },
+            });
+
+            if (response.ok){
+                const data = await response.json();
+                setPersonalStats(data);
+            }
+            // else { console.error("Failed to fetch personal stats data:", response.statusText); }
+        }
+        catch(error){ console.error("Error fetching personal stats data:", error); }
+        finally{ setIsLoadingAttendanceData(false); }
+    };
+
+    const fetchStudentRanks = async (classes: { id: number; class_name: string; }[]) => {
+        try {
+            const rankPromises = classes.map(async (classData) => {
+                const response = await fetch(`${API_URL}/api/analytics/class-rank/${classData.id}`, {
+                    method: "GET",
+                    credentials: "include"
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    return { class_name: classData.class_name, rank: data.rank };
+                } 
+                else {
+                    console.error(`Failed to fetch rank for class ${classData.class_name}:`, response.statusText);
+                    return null;
+                }
+            });
+            const results = await Promise.all(rankPromises);
+            const filtered = results.filter((item): item is { class_name: string; rank: number } => item !== null);
+            setRanks(filtered);
+        }
+        catch(error) { console.error("Error fetching student ranks:", error); }
+    };
+
+    const fetchStudentClasses = async () => {
+        try{
+            const response = await fetch(`${API_URL}/api/user/my-classes`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    credentials: "include"
+                },
+            });
+
+            if (response.ok){
+                const data = await response.json();
+                console.log("Student classes data:", data);
+                const simplifiedClasses = data.classes.map((classData: { id: number; class_name: string; }) => ({
+                    id: classData.id,
+                    class_name: classData.class_name,
+                }));
+                await(fetchStudentRanks(simplifiedClasses));
+            }
+            else { console.error("Failed to fetch student classes data:", response.statusText); }
+        }
+        catch(error){ console.error("Error fetching student classes data:", error); }
+    };
+
     useEffect(() => {
         if (user?.role === "professor") { 
             fetchClassAttendanceData(); 
             fetchTopStudentsData();
+        }
+        else { 
+            fetchPersonalStatsData(); 
+            fetchStudentClasses();
         }
     }, [user?.role]);
 
@@ -167,7 +214,6 @@ export default function Analytics() {
                                 />
                             )}
                         </View>
-                        {/* TODO: Data from top students route are used here */}
                         <View style={styles.section}>
                             <Text style={styles.sectionTitle}>Top Attending Students</Text>
                             <FlatList
@@ -198,6 +244,8 @@ export default function Analytics() {
         );
     };
 
+    const milestoneReached = ranks.some(r => r.rank && r.rank <= 3);
+
     // TODO: Call personal stats route here and display info
     const renderStudentView = () => {
         return (
@@ -211,12 +259,14 @@ export default function Analytics() {
                             <Text style={styles.sectionTitle}>Your Attendance Stats</Text>
                             <View style={styles.personalStatsContainer}>
                                 <View style={styles.statBox}>
-                                    <Text style={styles.statValue}>{MOCK_PERSONAL_STATS.attendance_rate.toFixed(1)}%</Text>
+                                    <Text style={styles.statValue}>
+                                        {personalStats && parseFloat(String(personalStats.attendance_rate)).toFixed(1)}%
+                                    </Text>
                                     <Text style={styles.statLabel}>Attendance Rate</Text>
                                 </View>
                                 <View style={styles.statBox}>
                                     <Text style={styles.statValue}>
-                                        {MOCK_PERSONAL_STATS.attended_sessions}/{MOCK_PERSONAL_STATS.total_sessions}
+                                        {personalStats ? personalStats.attended_sessions : 0}/{personalStats ? personalStats.total_sessions : 0}
                                     </Text>
                                     <Text style={styles.statLabel}>Sessions Attended</Text>
                                 </View>
@@ -227,38 +277,43 @@ export default function Analytics() {
                             <Text style={styles.sectionTitle}>Your Streaks</Text>
                             <View style={styles.streakContainer}>
                                 <View style={styles.streakBox}>
-                                    <Text style={styles.streakValue}>{MOCK_PERSONAL_STATS.current_streak}</Text>
+                                    <Text style={styles.streakValue}>{personalStats ? personalStats.current_streak : 0}</Text>
                                     <Text style={styles.streakLabel}>Current Streak</Text>
                                 </View>
                                 <View style={styles.streakBox}>
-                                    <Text style={styles.streakValue}>{MOCK_PERSONAL_STATS.longest_streak}</Text>
+                                    <Text style={styles.streakValue}>{personalStats ? personalStats.longest_streak : 0}</Text>
                                     <Text style={styles.streakLabel}>Longest Streak</Text>
                                 </View>
                             </View>
                         </View>
 
                         <View style={styles.section}>
-                            <Text style={styles.sectionTitle}>Class Ranking</Text>
-                            <View style={styles.rankContainer}>
-                                <Text style={styles.rankNumber}>#{MOCK_CLASS_RANK}</Text>
-                                <Text style={styles.rankLabel}>Your position in class attendance</Text>
-                            </View>
+                            <Text style={styles.sectionTitle}>Class Rankings</Text>
+                            {ranks.length === 0 ? (
+                                <Text style={styles.rankLabel}>No ranking data available.</Text>
+                            ) : (
+                                ranks.map((item, index) => (
+                                <View key={index} style={styles.rankContainer}>
+                                    <Text style={styles.rankNumber}>#{item.rank}</Text>
+                                    <Text style={styles.rankLabel}>{item.class_name}</Text>
+                                </View>
+                                ))
+                            )}
                         </View>
                         
                         <View style={styles.section}>
                             <Text style={styles.sectionTitle}>Upcoming Milestones</Text>
-                            <View style={styles.milestoneCard}>
-                                <View style={styles.milestoneIcon}>
-                                    <Text style={styles.milestoneIconText}>🔥</Text>
-                                </View>
-                                <View style={styles.milestoneInfo}>
-                                    <Text style={styles.milestoneName}>10-Day Streak</Text>
-                                    <Text style={styles.milestoneProgress}>8/10 days completed</Text>
-                                    <View style={styles.milestoneProgressBar}>
-                                        <View style={[styles.milestoneProgressFill, { width: '80%' }]} />
+                            {milestoneReached && (
+                                <View style={styles.milestoneCard}>
+                                    <View style={styles.milestoneIcon}>
+                                    <Text style={styles.milestoneIconText}>🏆</Text>
+                                    </View>
+                                    <View style={styles.milestoneInfo}>
+                                    <Text style={styles.milestoneName}>Top 3 in Attendance</Text>
+                                    <Text style={styles.milestoneProgress}>You're among the top 3 in at least one class!</Text>
                                     </View>
                                 </View>
-                            </View>
+                            )}
                             
                             <View style={styles.milestoneCard}>
                                 <View style={styles.milestoneIcon}>
@@ -266,9 +321,9 @@ export default function Analytics() {
                                 </View>
                                 <View style={styles.milestoneInfo}>
                                     <Text style={styles.milestoneName}>Perfect Month</Text>
-                                    <Text style={styles.milestoneProgress}>22/30 days completed</Text>
+                                    <Text style={styles.milestoneProgress}>{personalStats?.current_streak}/30 days completed</Text>
                                     <View style={styles.milestoneProgressBar}>
-                                        <View style={[styles.milestoneProgressFill, { width: '73%' }]} />
+                                        <View style={[styles.milestoneProgressFill, { width: `${((personalStats?.current_streak ?? 0) / 30) * 100}%` }]} />
                                     </View>
                                 </View>
                             </View>

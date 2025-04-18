@@ -1,5 +1,5 @@
-import React from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from "react-native";
+import React, {useEffect, useState} from "react";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, ActivityIndicator } from "react-native";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import { useUserContext } from "@/context/user";
 import { RootStackParamList } from "@/types/types"; 
@@ -7,22 +7,22 @@ import Navbar from '@/components/navbar';
 import Constants from "expo-constants";
 import Topbar from '@/components/topbar';
 
-// Placeholder data for professor view
-const MOCK_CLASS_STATS = [
-  { id: 1, class_name: "Introduction to Computer Science", sessions_count: 24, attendance_rate: 87.5 },
-  { id: 2, class_name: "Data Structures and Algorithms", sessions_count: 18, attendance_rate: 92.3 },
-  { id: 3, class_name: "Mobile App Development", sessions_count: 15, attendance_rate: 76.8 },
-];
+// // Placeholder data for professor view
+// const MOCK_CLASS_STATS = [
+//   { id: 1, class_name: "Introduction to Computer Science", sessions_count: 24, attendance_rate: 87.5 },
+//   { id: 2, class_name: "Data Structures and Algorithms", sessions_count: 18, attendance_rate: 92.3 },
+//   { id: 3, class_name: "Mobile App Development", sessions_count: 15, attendance_rate: 76.8 },
+// ];
 
-const MOCK_TOP_STUDENTS = [
-  { id: 1, student_name: "Alex Johnson", attendance_count: 57, attendance_rate: 100 },
-  { id: 2, student_name: "Jamie Smith", attendance_count: 56, attendance_rate: 98.2 },
-  { id: 3, student_name: "Taylor Wilson", attendance_count: 55, attendance_rate: 96.5 },
-  { id: 4, student_name: "Morgan Lee", attendance_count: 53, attendance_rate: 93.0 },
-  { id: 5, student_name: "Casey Brown", attendance_count: 51, attendance_rate: 89.5 },
-];
+// const MOCK_TOP_STUDENTS = [
+//   { id: 1, student_name: "Alex Johnson", attendance_count: 57, attendance_rate: 100 },
+//   { id: 2, student_name: "Jamie Smith", attendance_count: 56, attendance_rate: 98.2 },
+//   { id: 3, student_name: "Taylor Wilson", attendance_count: 55, attendance_rate: 96.5 },
+//   { id: 4, student_name: "Morgan Lee", attendance_count: 53, attendance_rate: 93.0 },
+//   { id: 5, student_name: "Casey Brown", attendance_count: 51, attendance_rate: 89.5 },
+// ];
 
-// Placeholder data for student view
+// // Placeholder data for student view
 const MOCK_PERSONAL_STATS = {
   total_sessions: 57,
   attended_sessions: 52,
@@ -33,11 +33,98 @@ const MOCK_PERSONAL_STATS = {
 
 const MOCK_CLASS_RANK = 7;
 
-export default function Leaderboard() {
-    const navigation = useNavigation<NavigationProp<RootStackParamList>>();
-    const { user } = useUserContext();
+const API_URL = Constants.expoConfig?.extra?.API_URL || "http://localhost:5000";
 
-    // TODO: Use routes to call class info here
+export default function Analytics() {
+    const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+    const [isLoadingAttendanceData, setIsLoadingAttendanceData] = useState(false);
+    const { user } = useUserContext();
+    const [classAttendanceData, setClassAttendanceData] = useState<{ id: number; class_name: string; sessions_count: number; attendance_rate: number; }[]>([]);
+    const [topStudentsData, setTopStudentsData] = useState<{ id: number; student_name: string; attendance_count: number; attendance_rate: number; }[]>([]);
+    const [personalStatsData, setPersonalStatsData] = useState([]);
+
+    // Fetch class attendance data /api/analytics/class-attendance
+    const fetchClassAttendanceData = async () => {
+        if (user?.role !== "professor") { return; }
+        setIsLoadingAttendanceData(true);
+
+        try{
+            const response = await fetch(`${API_URL}/api/analytics/class-attendance`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    credentials: "include"
+                },
+            });
+
+            if (response.ok){
+                const data = await response.json();
+                console.log("Class attendance data:", data);
+
+                const formattedData = data.map((item: any) => ({
+                    id: item.classroom_id,
+                    class_name: item.class_name,
+                    sessions_count: Number(item.sessions_count) || 0,
+                    attendance_rate: Number(item.attendance_rate) || 0,
+                }))
+                .sort((a: { sessions_count: number, attendance_rate: number }, b: { sessions_count: number, attendance_rate: number }) => {
+                    // First, sort by attendance count in descending order
+                    if (a.attendance_rate !== b.attendance_rate) { return b.attendance_rate - a.attendance_rate; }
+                    // If attendance count is tied, sort by attendance rate in descending order
+                    return b.sessions_count - a.sessions_count;
+                });
+                setClassAttendanceData(formattedData);
+            }
+            else { console.error("Failed to fetch class attendance data:", response.statusText); }
+        }
+        catch(error){ console.error("Error fetching class attendance data:", error); }
+        finally{ setIsLoadingAttendanceData(false); }
+    };
+
+    // Fetch top students data /api/analytics/top-students
+    const fetchTopStudentsData = async () => {
+        if (user?.role !== "professor") { return; }
+        try {
+            const response = await fetch(`${API_URL}/api/analytics/top-students`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    credentials: "include"
+                },
+            });
+
+            if (response.ok){
+                const data = await response.json();
+                // console.log("Top students data:", data);
+
+                const formattedData = data.map((item: any) => ({
+                    id: item.id,
+                    student_name: item.student_name,
+                    attendance_count: Number(item.attendance_count) || 0,
+                    attendance_rate: Number(item.attendance_rate) || 0,
+                }))
+                .sort((a: { attendance_count: number, attendance_rate: number }, b: { attendance_count: number, attendance_rate: number }) => {
+                    // First, sort by attendance count in descending order
+                    if (a.attendance_count !== b.attendance_count) {
+                        return b.attendance_count - a.attendance_count;
+                    }
+                    // If attendance count is tied, sort by attendance rate in descending order
+                    return b.attendance_rate - a.attendance_rate;
+                });
+                setTopStudentsData(formattedData);
+            }
+            else { console.error("Failed to fetch top students data:", response.statusText); }
+        }
+        catch (error) { console.error("Error fetching top students data:", error); }
+    };
+
+    useEffect(() => {
+        if (user?.role === "professor") { 
+            fetchClassAttendanceData(); 
+            fetchTopStudentsData();
+        }
+    }, [user?.role]);
+
     const renderProfessorView = () => {
         return (
             <View style={styles.container}>
@@ -48,40 +135,51 @@ export default function Leaderboard() {
                     <ScrollView contentContainerStyle={styles.scrollContent}>
                         <View style={styles.section}>
                             <Text style={styles.sectionTitle}>Class Attendance Overview</Text>
-                            <FlatList
-                                data={MOCK_CLASS_STATS}
-                                renderItem={({ item }) => (
-                                    <View style={styles.statCard}>
-                                        <Text style={styles.statTitle}>{item.class_name}</Text>
-                                        <Text style={styles.statSubtitle}>{item.sessions_count} sessions total</Text>
-                                        <View style={styles.progressBarContainer}>
-                                            <View style={[
-                                                styles.progressBar, 
-                                                { width: `${item.attendance_rate}%` },
-                                                item.attendance_rate > 90 ? styles.progressExcellent :
-                                                item.attendance_rate > 80 ? styles.progressGood :
-                                                styles.progressNeeds
-                                            ]} />
-                                            <Text style={styles.progressText}>{item.attendance_rate.toFixed(1)}% attendance</Text>
+                            {isLoadingAttendanceData ? (
+                                <View style={styles.loadingContainer}>
+                                <ActivityIndicator size="small" color="#4FEEAC" />
+                                <Text style={styles.loadingText}>Loading attendance data...</Text>
+                                </View>
+                            ) : classAttendanceData.length === 0 ? (
+                                <View style={styles.emptyStateContainer}>
+                                <Text style={styles.emptyStateText}>No attendance data available yet</Text>
+                                </View>
+                            ) : (
+                                <FlatList
+                                    data={classAttendanceData}
+                                    renderItem={({ item }) => (
+                                        <View style={styles.statCard}>
+                                            <Text style={styles.statTitle}>{item.class_name}</Text>
+                                            <Text style={styles.statSubtitle}>{item.sessions_count} sessions total</Text>
+                                            <View style={styles.progressBarContainer}>
+                                                <View style={[
+                                                    styles.progressBar, 
+                                                    { width: `${item.attendance_rate}%` },
+                                                    item.attendance_rate > 90 ? styles.progressExcellent :
+                                                    item.attendance_rate > 80 ? styles.progressGood :
+                                                    styles.progressNeeds
+                                                ]} />
+                                                <Text style={styles.progressText}>{item.attendance_rate.toFixed(1)}% attendance</Text>
+                                            </View>
                                         </View>
-                                    </View>
-                                )}
-                                keyExtractor={(item) => item.id.toString()}
-                                scrollEnabled={false}
-                            />
+                                    )}
+                                    keyExtractor={(item) => item.id.toString()}
+                                    scrollEnabled={false}
+                                />
+                            )}
                         </View>
                         {/* TODO: Data from top students route are used here */}
                         <View style={styles.section}>
                             <Text style={styles.sectionTitle}>Top Attending Students</Text>
                             <FlatList
-                                data={MOCK_TOP_STUDENTS}
+                                data={topStudentsData}
                                 renderItem={({ item, index }) => (
                                     <View style={styles.studentCard}>
                                         <Text style={styles.rank}>#{index + 1}</Text>
                                         <View style={styles.studentInfo}>
                                             <Text style={styles.studentName}>{item.student_name}</Text>
                                             <Text style={styles.attendanceText}>
-                                                {item.attendance_count} check-ins | {item.attendance_rate.toFixed(1)}%
+                                                {item.attendance_count} check-ins | {item.attendance_rate.toFixed(2)}%
                                             </Text>
                                         </View>
                                     </View>
@@ -436,4 +534,24 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontWeight: "bold",
     },
+    loadingContainer: {
+        padding: 20,
+        alignItems: 'center',
+      },
+      loadingText: {
+        fontSize: 14,
+        color: '#666',
+        marginTop: 8,
+      },
+      emptyStateContainer: {
+        padding: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+      },
+      emptyStateText: {
+        fontSize: 16,
+        color: '#666',
+        textAlign: 'center',
+        padding: 20,
+      },
 });

@@ -201,7 +201,7 @@ export default function ClassScreen() {
 
     useEffect(() => { 
         if (user?.role === "professor") { classList(); } 
-        else {
+        else if (user?.role === "student") {
             const fetchStudentClassStats = async () => {
                 try {
                     const response = await fetch(`${API_URL}/api/analytics/student-class-info`, {

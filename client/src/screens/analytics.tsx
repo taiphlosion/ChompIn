@@ -155,7 +155,7 @@ export default function Analytics() {
                 }));
                 await(fetchStudentRanks(simplifiedClasses));
             }
-            else { console.error("Failed to fetch student classes data:", response.statusText); }
+            // else { console.error("Failed to fetch student classes data:", response.statusText); }
         }
         catch(error){ console.error("Error fetching student classes data:", error); }
     };
@@ -165,7 +165,7 @@ export default function Analytics() {
             fetchClassAttendanceData(); 
             fetchTopStudentsData();
         }
-        else { 
+        else if (user?.role === "student") { 
             fetchPersonalStatsData(); 
             fetchStudentClasses();
         }

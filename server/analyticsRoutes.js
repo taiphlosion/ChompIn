@@ -199,7 +199,7 @@ router.get("/class-rank/:classroomId", verifyToken, authorizeRoles("student"), a
 });
 
 // Get class info for a student
-router.get("/student-class-info", authenticateToken, async (req, res) => {
+router.get("/student-class-info", authorizeRoles("student"), async (req, res) => {
   const studentId = req.user.id;
 
   try {

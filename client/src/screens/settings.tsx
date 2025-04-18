@@ -88,29 +88,6 @@ export default function Setting() {
                     </View>
                 </View>
 
-                {/* Reminders and notifications */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Notifications</Text>
-                    <View style={styles.settingItem}>
-                        <Text style={styles.sectionTitle}>Enable Notifications</Text>
-                        <Switch
-                            value={notifications}
-                            onValueChange={toggleNotifications}
-                            trackColor={{ false: "#767577", true: "#4FEEAC" }}
-                            thumbColor={notifications ? "#fff" : "#f4f3f4"}
-                        />
-                    </View>
-                    <View style={styles.settingItem}>
-                        <Text style={styles.sectionTitle}>Class Reminders</Text>
-                        <Switch
-                            value={classReminders}
-                            onValueChange={toggleClassReminders}
-                            trackColor={{ false: "#767577", true: "#4FEEAC" }}
-                            thumbColor={classReminders ? "#fff" : "#f4f3f4"}
-                        />
-                    </View>
-                </View>
-
                 {/* About Section */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>About</Text>

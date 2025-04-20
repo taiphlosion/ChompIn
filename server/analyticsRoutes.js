@@ -42,10 +42,11 @@ router.get("/class-attendance", verifyToken, authorizeRoles("professor"), async 
         WHERE c.professor_id = $1
         ORDER BY c.class_name;
         `;
+
     const result = await pool.query(query, [req.user.id]);
+
     res.json(result.rows);
-  } 
-  catch (err) {
+  } catch (err) {
     console.error("Error fetching class attendance:", err);
     res.status(500).json({ error: "Failed to fetch class attendance" });
   }
@@ -80,15 +81,16 @@ router.get("/top-students", verifyToken, authorizeRoles("professor"), async (req
     `;
 
     const result = await pool.query(query, [req.user.id]);
+
     res.json(result.rows);
-  } 
-  catch (err) {
+  } catch (err) {
     console.error("Error fetching top students:", err);
     res.status(500).json({ error: "Failed to fetch top students" });
   }
 });
 
 // Student Routes
+
 // Get personal attendance statistics
 router.get("/personal-stats", verifyToken, authorizeRoles("student"), async (req, res) => {
   try {
@@ -148,6 +150,7 @@ router.get("/personal-stats", verifyToken, authorizeRoles("student"), async (req
         COALESCE((SELECT streak_length FROM streaks WHERE is_current ORDER BY streak_length DESC LIMIT 1), 0) AS current_streak,
         COALESCE((SELECT MAX(streak_length) FROM streaks), 0) AS longest_streak
     `;
+
     const streakResult = await pool.query(streakQuery, [req.user.id]);
 
     // Combine results
@@ -155,9 +158,9 @@ router.get("/personal-stats", verifyToken, authorizeRoles("student"), async (req
       ...statsResult.rows[0],
       ...streakResult.rows[0]
     };
+
     res.json(stats);
-  } 
-  catch (err) {
+  } catch (err) {
     console.error("Error fetching personal stats:", err);
     res.status(500).json({ error: "Failed to fetch personal stats" });
   }
@@ -184,10 +187,12 @@ router.get("/class-rank/:classroomId", verifyToken, authorizeRoles("student"), a
 
     const result = await pool.query(query, [classroomId, studentId]);
 
-    if (result.rows.length === 0) { return res.json({ rank: null }); }
+    if (result.rows.length === 0) {
+      return res.json({ rank: null });
+    }
+
     res.json({ rank: result.rows[0].rank });
-  } 
-  catch (err) {
+  } catch (err) {
     console.error("Error fetching class rank:", err);
     res.status(500).json({ error: "Failed to fetch class rank" });
   }
@@ -226,11 +231,11 @@ router.get("/student-class-info", verifyToken, authorizeRoles("student"), async 
     `, [studentId]);
 
     res.json({ classes: rows });
-  } 
-  catch (err) {
+  } catch (err) {
     console.error("Error fetching student classes:", err);
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
 
 module.exports = router;

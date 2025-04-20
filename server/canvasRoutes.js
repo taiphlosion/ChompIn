@@ -7,8 +7,7 @@ router.get("/courses", async (req, res) => {
     try {
         const response = await canvasApi.get("/courses");
         res.json(response.data);
-    } 
-    catch (err) {
+    } catch (err) {
         console.error(err.response?.data || err.message);
         res.status(500).json({ error: "Failed to list courses" });
     }
@@ -22,8 +21,7 @@ router.get("/courses/:courseId/students", async (req, res) => {
             params: { type: ["StudentEnrollment"] },
         });
         res.json(response.data);
-    } 
-    catch (err) {
+    } catch (err) {
         console.error(err.response?.data || err.message);
         res.status(500).json({ error: "Failed to list students" });
     }
@@ -43,8 +41,7 @@ router.post("/courses/:courseId/assignments", async (req, res) => {
             published: true,
         });
         res.json(response.data);
-    } 
-    catch (err) {
+    } catch (err) {
         console.error(err.response?.data || err.message);
         res.status(500).json({ error: "Failed to create assignment" });
     }
@@ -65,8 +62,7 @@ router.post("/courses/:courseId/assignments/:assignmentId/submit", async (req, r
             },
         });
         res.json(response.data);
-    } 
-    catch (err) {
+    } catch (err) {
         console.error(err.response?.data || err.message);
         res.status(500).json({ error: "Failed to submit attendance" });
     }

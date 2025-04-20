@@ -33,7 +33,6 @@ export default function Navigation() {
     
     return (
         <>
-        {/* Show screen based on if cookie or user data is there */}
             <Stack.Navigator initialRouteName={user ? "Tabs" : "login"} >
                 {!user ? (
                     <>
@@ -41,7 +40,6 @@ export default function Navigation() {
                         <Stack.Screen name="signup" component={SignupScreen} options={{ headerShown: false }} />
                     </>
                 ) : (
-                    // Basic home screen and tabs
                     <Stack.Screen name="Tabs" component={Tabs} options={{ headerShown: false }} />
                 )}
             </Stack.Navigator>

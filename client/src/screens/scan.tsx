@@ -11,7 +11,6 @@ import QRCode from 'react-native-qrcode-svg';
 import Constants from "expo-constants";
 
 const API_URL = Constants.expoConfig?.extra?.API_URL || "http://localhost:5000";
-// Store it outside of scope to prevent re-initialization on every render
 let globalQRCode = "";
 
 export default function CameraScreen() {
@@ -46,10 +45,16 @@ export default function CameraScreen() {
 
     const handleSnap = async ({ type, data }: { type: string; data: string }) => {
         // Check if we're already processing or the camera is not scanning
-        if (isProcessingRef.current || !scanState.isScanning) { return; }
+        if (isProcessingRef.current || !scanState.isScanning) {
+            console.log("Blocking scan - already processing or camera disabled");
+            return;
+        }
         
         // Check if this is the same code we just scanned
-        if (data === lastScannedCode.current) { return; }
+        if (data === lastScannedCode.current) {
+            console.log("Blocking duplicate scan");
+            return;
+        }
         
         // Set processing flags immediately
         isProcessingRef.current = true;
@@ -68,7 +73,8 @@ export default function CameraScreen() {
         try {
             const url = new URL(`http://placeholder.com/${data.split('undefined/')[1]}`);
             const sessionId = url.searchParams.get('session');
-            
+            console.log("Processing session:", sessionId);
+
             if (!sessionId) { 
                 setScanState(prev => ({ 
                     ...prev, 

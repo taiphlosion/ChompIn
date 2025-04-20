@@ -17,7 +17,9 @@ router.post("/register", async (req, res) => {
       "SELECT * FROM users WHERE email = $1",
       [email]
     );
-    if (existingUser.rows.length > 0) { return res.status(400).json({ message: "Email already in use" }); }
+    if (existingUser.rows.length > 0) {
+      return res.status(400).json({ message: "Email already in use" });
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -27,8 +29,9 @@ router.post("/register", async (req, res) => {
     );
 
     res.status(201).json({ message: "User registered successfully" });
-  } 
-  catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Log in
@@ -40,10 +43,15 @@ router.post("/login", async (req, res) => {
     const user = await pool.query("SELECT * FROM users WHERE email = $1", [
       email,
     ]);
-    if (user.rows.length === 0) { return res.status(400).json({ message: "Invalid email" }); }
+    if (user.rows.length === 0) {
+      return res.status(400).json({ message: "Invalid email or password" });
+
+    }
 
     const isMatch = await bcrypt.compare(password, user.rows[0].password_hash);
-    if (!isMatch) { return res.status(400).json({ message: "Invalid password" }); }
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid email or password" });
+    }
 
     const token = jwt.sign(
       { id: user.rows[0].id, role: user.rows[0].role },
@@ -69,8 +77,9 @@ router.post("/login", async (req, res) => {
         role: user.rows[0].role,
       },
     });
-  } 
-  catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // **Get Current User (Protected Route)**
@@ -82,11 +91,12 @@ router.get("/me", verifyToken, async (req, res) => {
       [req.user.id]
     );
 
-    if (user.rows.length === 0) { return res.status(404).json({ message: "User not found" }); }
+    if (user.rows.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
     res.json(user.rows[0]);
-  } 
-  catch (err) {
+  } catch (err) {
     console.error("Database error:", err);
     res.status(500).json({ message: "Internal Server Error" });
   }
@@ -101,5 +111,10 @@ router.post("/logout", (req, res) => {
 
   res.json({ message: "Logged out successfully" });
 });
+
+// example role protected route
+// router.get("/information only a professor can access", verifyToken, authorizeRoles("professor"), (req, res) => {
+//     res.json({ message: "Welcome to the Professor Dashboard" });
+// });
 
 module.exports = router;

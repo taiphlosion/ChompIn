@@ -27,7 +27,6 @@ export default function Setting() {
                 method: 'POST',
                 credentials: 'include',
             });
-            console.log("Logout successful");
             navigation.navigate("login");
         }
         catch(error){ console.log(error); }

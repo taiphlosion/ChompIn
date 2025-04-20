@@ -1,10 +1,5 @@
 import React from "react";
 import { View, Dimensions, StyleSheet, Image, TouchableOpacity } from "react-native";
-import HomeScreen from "../screens/home";
-import ScanScreen from "../screens/scan";
-import ClassScreen from "../screens/classes";
-import AnalyticsScreen from "../screens/analytics";
-import SettingScreen from "../screens/settings";
 import { NavigationProp } from "@react-navigation/native";
 import { RootStackParamList } from "@/types/types";
 

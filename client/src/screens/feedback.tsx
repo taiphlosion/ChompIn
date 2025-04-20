@@ -1,15 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  Button,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-  Alert,
-  Image,
-} from 'react-native';
+import { View, Text, TextInput, Button, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Image,} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
 export default function Feedback() {

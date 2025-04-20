@@ -16,7 +16,7 @@ You can test the frontend either on a mobile device or your computer, but testin
 If you're testing on mobile, follow these additional steps:
 
 1. **Set up your `.env` file:**
-   - Create a `.env` file in the `client` directory (not in `src`).
+   - Create a `.env` file in the `client` directory.
    - Add the following line to the `.env` file:
      ```
      API_URL=<your-device-IP>
@@ -41,7 +41,7 @@ If you're testing on mobile, follow these additional steps:
 
 ## Testing on Desktop
 
-If you're testing on desktop, you can skip the `.env` setup step. Once dependencies are installed and the project is started, you can open the project on the web by clicking on the **localhost link** in the terminal.
+Not recommended since the primary development environment was on Mobile. If you're testing on desktop, you can skip the `.env` setup step. Once dependencies are installed and the project is started, you can open the project on the web by clicking on the **localhost** link in the terminal.
 
 ## Note
 

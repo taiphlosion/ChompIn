@@ -29,3 +29,7 @@ Once you're done with your session, shut down the Docker container:
 docker-compose down
 ```
 This cleans the development environment for next session. 
+You can clear the data stored on the volumes as well when you compose down with: 
+```sh
+docker-compose down -v
+```

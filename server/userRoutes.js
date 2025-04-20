@@ -16,7 +16,8 @@ router.get("/classrooms", verifyToken, authorizeRoles("professor"), async (req, 
     );
 
     res.json(result.rows);
-  } catch (err) {
+  } 
+  catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to fetch classrooms" });
   }
@@ -46,9 +47,7 @@ router.get(
 
       const { rows } = await pool.query(classroomQuery, [id]);
 
-      if (rows.length === 0) {
-        return res.status(404).json({ error: "Classroom not found" });
-      }
+      if (rows.length === 0) { return res.status(404).json({ error: "Classroom not found" }); }
 
       const { days_of_week, start_date, end_date, start_time, end_time } = rows[0];
 
@@ -76,7 +75,8 @@ router.get(
       }
 
       res.json({ sessions });
-    } catch (err) {
+    } 
+    catch (err) {
       console.error("Error generating upcoming sessions:", err);
       res.status(500).json({ error: "Internal server error" });
     }
@@ -94,19 +94,11 @@ router.post(
   authorizeRoles("professor"),
   async (req, res) => {
     try {
-      const {
-        className,
-        daysOfWeek,
-        timeBlockId,
-        startDate,
-        endDate,
-      } = req.body;
+      const { className, daysOfWeek, timeBlockId, startDate, endDate } = req.body;
 
       // Validate required fields
       if (!className || !Array.isArray(daysOfWeek) || !timeBlockId || !startDate || !endDate) {
-        return res.status(400).json({
-          error: "Missing required fields: className, daysOfWeek[], timeBlockId, startDate, endDate",
-        });
+        return res.status(400).json({ error: "Missing required fields: className, daysOfWeek[], timeBlockId, startDate, endDate"});
       }
 
       if (!req.user?.id) {
@@ -128,7 +120,8 @@ router.post(
         message: "Classroom created successfully",
         classroom: result.rows[0],
       });
-    } catch (err) {
+    } 
+    catch (err) {
       console.error("Error creating classroom:", err);
       res.status(500).json({ error: "Failed to create classroom" });
     }
@@ -142,24 +135,18 @@ router.post(
   authorizeRoles("professor"),
   async (req, res) => {
     try {
-
       const { classroom_id } = req.body;
 
-      if (!classroom_id) {
-        return res.status(400).json({ error: "Classroom ID is required" });
-      }
+      if (!classroom_id) { return res.status(400).json({ error: "Classroom ID is required" }); }
 
       const classroomResult = await pool.query(
         "SELECT * FROM classrooms WHERE id = $1 AND professor_id = $2",
         [classroom_id, req.user.id]
       );
 
-      if (classroomResult.rows.length === 0) {
-        return res.status(403).json({ error: "Unauthorized or classroom does not exist" });
-      }
+      if (classroomResult.rows.length === 0) { return res.status(403).json({ error: "Unauthorized or classroom does not exist" }); }
 
       const sessionId = `session_${Date.now()}`; // Unique session ID
-
       const createdAt = new Date();
       const sessionDate = createdAt.toISOString().split('T')[0]; // YYYY-MM-DD
       const expiresAt = new Date(createdAt.getTime() + 90 * 60 * 1000); // 90 mins later
@@ -182,7 +169,8 @@ router.post(
         [sessionId, classroom_id, req.user.id, sessionDate, expiresAt.toISOString()]
       );
       res.json({ qrImage, sessionId, sessionDate });
-    } catch (err) {
+    } 
+    catch (err) {
       console.error("Error generating QR:", err);
       res.status(500).json({ error: "Failed to generate QR code" });
     }
@@ -205,9 +193,7 @@ router.post('/mark-attendance', verifyToken, authorizeRoles('student'), async (r
       [sessionId]
     );
 
-    if (sessionResult.rows.length === 0) {
-      return res.status(400).json({ error: "Invalid or expired session" });
-    }
+    if (sessionResult.rows.length === 0) { return res.status(400).json({ error: "Invalid or expired session" }); }
 
     const { classroom_id } = sessionResult.rows[0];
 
@@ -225,14 +211,13 @@ router.post('/mark-attendance', verifyToken, authorizeRoles('student'), async (r
         { params: { type: ['StudentEnrollment'] } }
       );
 
-      const canvasMatch = canvasRoster.data.some(entry =>
-        entry.user.login_id?.toLowerCase() === req.user.email.toLowerCase()
-      );
+      const canvasMatch = canvasRoster.data.some(entry => entry.user.login_id?.toLowerCase() === req.user.email.toLowerCase() );
 
       if (!canvasMatch) {
         return res.status(403).json({ error: "You are not enrolled in this Canvas course" });
       }
     }
+
     // 3. Auto-enroll if not already
     await pool.query(
       `INSERT INTO enrollments (student_id, classroom_id)
@@ -255,13 +240,10 @@ router.post('/mark-attendance', verifyToken, authorizeRoles('student'), async (r
       [sessionId, studentId]
     );
 
-    if (checkAttendance.rows.length > 0) {
-      return res.status(400).json({ error: "Already checked in" });
-    }
+    if (checkAttendance.rows.length > 0) { return res.status(400).json({ error: "Already checked in" }); }
 
 
-    // verify attendance location
-
+    // verify attendance location for later lollll
 
     // Mark attendance
     const status = 'present';
@@ -289,9 +271,8 @@ router.post('/mark-attendance', verifyToken, authorizeRoles('student'), async (r
 
     const { total_sessions, present_count, late_count } = summary.rows[0];
     const grade = ((present_count + late_count * 0.8) / total_sessions) * 100;
-    console.log("Attendance grade", grade.toFixed(2));
 
-    // canvas api 
+    // canvas api
     // 4. Submit to Canvas (if linked — update below)
     // const canvasAssignmentId = 12345; // <-- replace with real assignmentId
     // const canvasCourseId = 67890;     // <-- replace with real courseId
@@ -305,7 +286,8 @@ router.post('/mark-attendance', verifyToken, authorizeRoles('student'), async (r
     // });
 
     res.json({ message: "Attendance marked successfully!" });
-  } catch (err) {
+  } 
+  catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
   }
@@ -316,9 +298,7 @@ router.get( "/my-classes", verifyToken, authorizeRoles("student"), async (req, r
   try {
     const studentId = req.user?.id;
 
-    if (!studentId) {
-      return res.status(401).json({ error: "Unauthorized: Missing user ID" });
-    }
+    if (!studentId) { return res.status(401).json({ error: "Unauthorized: Missing user ID" }); }
 
     const query = 
       `SELECT c.id, c.class_name, c.start_date, c.end_date, tb.start_time, tb.end_time
@@ -369,15 +349,7 @@ router.get(
       const results = [];
 
       for (const row of rows) {
-        const {
-          classroom_id,
-          class_name,
-          days_of_week,
-          start_date,
-          end_date,
-          start_time,
-          end_time,
-        } = row;
+        const { classroom_id, class_name, days_of_week, start_date, end_date, start_time, end_time } = row;
 
         const dayNums = days_of_week.map((d) => classDayMap[d]);
         const start = new Date(start_date);
@@ -409,7 +381,8 @@ router.get(
       }
 
       res.json({ sessions: results });
-    } catch (err) {
+    } 
+    catch (err) {
       console.error("Error fetching upcoming sessions:", err);
       res.status(500).json({ error: "Internal server error" });
     }

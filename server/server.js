@@ -32,11 +32,9 @@ app.get("/test-db", async (req, res) => {
   try {
     const result = await pool.query("SELECT NOW()"); // Query the database
     res.json({ message: "Database connected!", time: result.rows[0] });
-  } catch (err) {
-    res.status(500).json({ error: "Database connection failed" });
-  }
+  } 
+  catch (err) { res.status(500).json({ error: "Database connection failed" });}
 });
 
-app.listen(process.env.PORT, () =>
-  console.log(`Server running on port ${process.env.PORT}`)
+app.listen(process.env.PORT, () => console.log(`Server running on port ${process.env.PORT}`)
 );

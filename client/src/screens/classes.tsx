@@ -10,15 +10,8 @@ import Navbar from '@/components/navbar';
 import Topbar from '@/components/topbar';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
+//Actual one will be provided in production
 const API_URL = Constants.expoConfig?.extra?.API_URL || "http://localhost:5000";
-
-// Mock data for student view
-const MOCK_ENROLLED_CLASSES = [
-  { id: 1, class_name: "Introduction to Computer Science", professor: "Dr. Smith", attendance_rate: 92 },
-  { id: 2, class_name: "Mobile App Development", professor: "Dr. Johnson", attendance_rate: 88 },
-  { id: 3, class_name: "Data Structures and Algorithms", professor: "Dr. Williams", attendance_rate: 96 },
-  { id: 4, class_name: "Database Management", professor: "Dr. Brown", attendance_rate: 78 },
-];
 
 const timeBlocks = [
     { key: '1', value: '7:25 AM - 8:15 AM' },
@@ -41,9 +34,9 @@ export default function ClassScreen() {
         id: number;
         professor_id: number;
         class_name: string;
-        days_of_week: string[]; // matches the backend format
-        start_date: string; // ISO string from the backend
-        end_date: string;   // ISO string from the backend
+        days_of_week: string[]; 
+        start_date: string; 
+        end_date: string;   
         time_block_id: number;
     }
     const [classes, setClasses] = useState<Class[]>([]);
@@ -53,13 +46,13 @@ export default function ClassScreen() {
     const [className, setClassName] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
-    const [selectedClass, setSelectedClass] = useState<number | null>(null);
     const [selectedDays, setSelectedDays] = useState<string[]>([]);
     const [startDate, setStartDate] = useState<Date | null>(null);
     const [endDate, setEndDate] = useState<Date | null>(null);
     const [selectedTimeBlock, setSelectedTimeBlock] = useState<number | null>(null);
     const [startDatePickerVisible, setStartDatePickerVisible] = useState(false);
     const [endDatePickerVisible, setEndDatePickerVisible] = useState(false);
+
     interface StudentClass {
         classroom_id: number;
         class_name: string;
@@ -70,10 +63,6 @@ export default function ClassScreen() {
         attendance_rate: number;
     }
     const [studentClasses, setStudentClasses] = useState<StudentClass[]>([]);
-    
-    // For student view
-    const [enrollModalVisible, setEnrollModalVisible] = useState(false);
-    const [classCode, setClassCode] = useState("");
 
     // API route to fetch classroom of professor
     const classList = async () => {
@@ -85,7 +74,6 @@ export default function ClassScreen() {
             });
             if (response.ok) {
                 const data = await response.json();
-                // console.log("API response:", data);
                 setClasses(data);
             }
         } 
@@ -117,7 +105,6 @@ export default function ClassScreen() {
         }
 
         try{
-            
             setIsSubmitting(true);
             const response = await fetch(`${API_URL}/api/user/create-classroom`, {
                 method: "POST",
@@ -134,7 +121,6 @@ export default function ClassScreen() {
 
             if (response.ok) {
                 const data = await response.json();
-                // console.log("Class created:", data);
                 setClasses((prevClasses) => [...prevClasses, data.classroom]);
                 setClassName("");
                 setSelectedDays([]);
@@ -172,32 +158,16 @@ export default function ClassScreen() {
     };
 
     const getTimeBlockLabel = (timeBlockId: number | null | undefined) => {
-        // console.log("Time Block ID:", timeBlockId);
         
         // Handle null, undefined, 0, NaN, etc.
         if (!timeBlockId && timeBlockId !== 0) return 'Not set';
         
         const timeBlock = timeBlocks.find(block => parseInt(block.key) === timeBlockId);
         if (timeBlock) { return timeBlock.value; } 
-        else {
-            // console.log("No timeBlock found for ID:", timeBlockId);
-            return `Block ${timeBlockId}`;
-        }
+        else { return `Block ${timeBlockId}`; }
     };
 
-    //   MAYBE HAVE SOMETHING TO DELETE CLASS
-
-    // const enrollInClass = () => {
-    //     // For now, just show a success message
-    //     if (!classCode.trim()) {
-    //         Alert.alert("Error", "Please enter a class code");
-    //         return;
-    //     }
-        
-    //     setEnrollModalVisible(false);
-    //     setClassCode("");
-    //     Alert.alert("Success", "Successfully enrolled in class!");
-    // };
+    //  In the future just have something to delete classroom
 
     useEffect(() => { 
         if (user?.role === "professor") { classList(); } 
@@ -210,7 +180,6 @@ export default function ClassScreen() {
                     });
                     if (response.ok) {
                         const data = await response.json();
-                        console.log(data);
                         setStudentClasses(data.classes);
                     }
                 } 
@@ -231,7 +200,7 @@ export default function ClassScreen() {
     const filteredClasses = classes
     .filter((c) => {
       const nameMatch = c.class_name.toLowerCase().includes(searchTerm.toLowerCase());
-      const profMatch = false; // or use actual logic if you reintroduce `professor`
+      const profMatch = false; 
       return user?.role === "professor" ? nameMatch : nameMatch || profMatch;
     })
     .map((c) => ({
@@ -307,6 +276,7 @@ export default function ClassScreen() {
                             {filteredClasses.length} {filteredClasses.length === 1 ? "Class" : "Classes"} {searchTerm ? "Found" : ""}
                         </Text>
                         
+                        {/* Card for the actual class data */}
                         <FlatList
                             data={filteredClasses}
                             renderItem={({ item }) => (
@@ -339,7 +309,7 @@ export default function ClassScreen() {
                                             </View>
                                         </View>
                                     </View>
-                                    
+                                    {/* QR code action for the class but could potentially have more */}
                                     <View style={styles.classActions}>
                                         <TouchableOpacity 
                                             style={styles.classActionButton}
@@ -407,7 +377,7 @@ export default function ClassScreen() {
                                     </TouchableOpacity>
                                 ))}
                             </View>
-
+                            {/* Time block selection */}
                             <Text style={styles.inputLabel}>Time Block</Text>
                             <SelectList
                                 setSelected={(val: string) => setSelectedTimeBlock(parseInt(val))}
@@ -417,7 +387,7 @@ export default function ClassScreen() {
                                 dropdownStyles={styles.dropdownBox}
                                 placeholder="Select class time"
                             />
-
+                            {/* Start date selection */}
                             <View style={styles.dateRow}>
                                 <View style={styles.dateColumn}>
                                     <Text style={styles.inputLabel}>Start Date</Text>
@@ -430,7 +400,7 @@ export default function ClassScreen() {
                                         </Text>
                                     </TouchableOpacity>
                                 </View>
-                                
+                                {/* End date selection */}
                                 <View style={styles.dateColumn}>
                                     <Text style={styles.inputLabel}>End Date</Text>
                                     <TouchableOpacity 
@@ -512,8 +482,7 @@ export default function ClassScreen() {
                                 </View>
                             </Modal>
 
-
-                            
+                            {/* submit class button */}
                             <TouchableOpacity 
                                 style={[
                                     styles.modalButton,
@@ -531,39 +500,6 @@ export default function ClassScreen() {
                         </View>
                     </View>
                 </Modal>
-                
-                {/* Delete Confirmation Modal */}
-                {/* <Modal
-                    animationType="fade"
-                    transparent={true}
-                    visible={deleteModalVisible}
-                    onRequestClose={() => setDeleteModalVisible(false)}
-                >
-                    <View style={styles.modalOverlay}>
-                        <View style={styles.confirmModalContent}>
-                            <Text style={styles.confirmModalTitle}>Delete Class</Text>
-                            <Text style={styles.confirmModalText}>
-                                Are you sure you want to delete this class? This action cannot be undone.
-                            </Text>
-                            
-                            <View style={styles.confirmModalButtons}>
-                                <TouchableOpacity 
-                                    style={styles.cancelButton}
-                                    onPress={() => setDeleteModalVisible(false)}
-                                >
-                                    <Text style={styles.cancelButtonText}>Cancel</Text>
-                                </TouchableOpacity>
-                                
-                                <TouchableOpacity 
-                                    style={styles.deleteConfirmButton}
-                                    onPress={deleteClass}
-                                >
-                                    <Text style={styles.deleteConfirmButtonText}>Delete</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    </View>
-                </Modal> */}
             </View>
         );
     };
@@ -581,14 +517,6 @@ export default function ClassScreen() {
             <View style={styles.studentContentContainer}>
                 <View style={styles.studentHeader}>
                     <Text style={styles.headerTitle}>My Classes</Text>
-                    {/* Maybe have it, depends on how we decide between automatic QR code enrollement or just manual */}
-                    {/* <TouchableOpacity 
-                        style={styles.enrollButton}
-                        onPress={() => setEnrollModalVisible(true)}
-                    >
-                        <Ionicons name="add-circle" size={20} color="#333" />
-                        <Text style={styles.enrollButtonText}>Enroll in Class</Text>
-                    </TouchableOpacity> */}
                 </View>
 
                 <View style={styles.searchContainer}>
@@ -612,7 +540,7 @@ export default function ClassScreen() {
                 <Text style={styles.listHeader}>
                     {studentClasses.length} {studentClasses.length === 1 ? "Class" : "Classes"} {searchTerm ? "Found" : ""}
                 </Text>
-                
+                {/* Class cards data */}
                 <FlatList
                     data={studentClasses.filter(cls =>
                         cls.class_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -631,7 +559,7 @@ export default function ClassScreen() {
                                     <Text style={styles.professorName}>{item.professor_name}</Text>
                                 </View>
                             </View>
-
+                            {/* Info about the class attendance itself from student */}
                             <View style={styles.classDetailsContainer}>
                                 <Text style={styles.classDetailsText}>
                                     <Text style={styles.detailsLabel}>Total Sessions:</Text> {item.total_sessions}
@@ -677,7 +605,6 @@ const styles = StyleSheet.create({
         color: "#666",
         marginTop: 12,
     },
-    
     // Common content styles
     professorContentContainer: {
         flex: 1,
@@ -785,15 +712,12 @@ const styles = StyleSheet.create({
         fontWeight: "bold",
         color: "#333",
     },
-    
-    // List header
     listHeader: {
         fontSize: 16,
         fontWeight: "600",
         color: "#666",
         marginBottom: 12,
     },
-    
     // Class cards for professor view
     classesList: {
         paddingBottom: 24,
@@ -857,7 +781,6 @@ const styles = StyleSheet.create({
     deleteButton: {
         backgroundColor: "#ffeeee",
     },
-    
     // Modal styles
     modalOverlay: {
         flex: 1,
@@ -1020,7 +943,6 @@ const styles = StyleSheet.create({
         color: "#666",
         textAlign: "center",
     },
-    
     // Student class cards
     studentClassCard: {
         backgroundColor: "white",
@@ -1045,7 +967,6 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: "#666",
     },
-    
     // Attendance display
     attendanceContainer: {
         marginVertical: 12,
@@ -1085,7 +1006,6 @@ const styles = StyleSheet.create({
         fontWeight: "bold",
         color: "#333",
     },
-    
     // Student class actions
     studentClassActions: {
         flexDirection: "row",

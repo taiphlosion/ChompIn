@@ -103,25 +103,18 @@ export default function Signup() {
                 }),
             });
             const data = await response.json();
-            console.log(role);
 
             if (response.ok) {
-                console.log('Signup success:', data);
                 navigation.reset({
                     index: 0, // The first screen in the stack
                     routes: [{ name: 'login' }], // The route you want to go to (Login screen)
                 });
             }
-            else {
-                console.error('Signup error:', data.message);
-            }
+            else { console.error('Signup error:', data.message); }
         }
         catch (error) {
-            if (error instanceof Error) {
-                console.error("Signup error:", error.message);
-            } else {
-                console.error("Signup error:", error);
-            }
+            if (error instanceof Error) { console.error("Signup error:", error.message); } 
+            else { console.error("Signup error:", error); }
         }
     };
 
@@ -139,7 +132,6 @@ export default function Signup() {
                 />
                 {/* First name error */}
                 {errors.firstName ? <Text style={styles.errorText}>{String(errors.firstName)}</Text> : null} 
-
                 {/* Last name input */}
                 <TextInput
                     style={styles.input}
@@ -150,7 +142,6 @@ export default function Signup() {
                 />
                 {/* Last name error */}
                 {errors.lastName ? <Text style={styles.errorText}>{String(errors.lastName)}</Text> : null} 
-
                 {/* Email input */}
                 <TextInput
                     style={styles.input}
@@ -160,7 +151,6 @@ export default function Signup() {
                     placeholderTextColor={'gray'}
                 />
                 {errors.email ? <Text style={styles.errorText}>{String(errors.email)}</Text> : null}
-
                 {/* Password input */}
                 <TextInput
                     style={styles.input}
@@ -171,7 +161,6 @@ export default function Signup() {
                     secureTextEntry={true}
                 />
                 {errors.password ? <Text style={styles.errorText}>{String(errors.password)}</Text> : null}
-                
                 {/* Confirm password input */}
                 <TextInput
                     style={styles.input}
@@ -182,7 +171,6 @@ export default function Signup() {
                     secureTextEntry={true}
                 />
                 {errors.confirmPassword ? <Text style={styles.errorText}>{String(errors.confirmPassword)}</Text> : null}
-
                 {/* Account type selection*/}
                 <RadioGroup 
                     radioButtons={roles} 
@@ -191,10 +179,8 @@ export default function Signup() {
                     containerStyle={{ alignItems: 'flex-start' }} 
                 />
                 {errors.role ? <Text style={styles.errorText}>{String(errors.role)}</Text> : null}
-
                 {/* Submit button */}
                 <Button title="Submit" onPress={handleSignUp} />
-
                 {/* 🚀 Back to Login Button */}
                 <TouchableOpacity style={styles.backToLogin} onPress={() => navigation.reset({ index: 0, routes: [{ name: 'login' }]})}>
                     <Text style={styles.backToLoginText}>Back to Login</Text>

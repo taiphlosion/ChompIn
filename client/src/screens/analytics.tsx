@@ -7,9 +7,6 @@ import Navbar from '@/components/navbar';
 import Constants from "expo-constants";
 import Topbar from '@/components/topbar';
 
-// Dependent on whether the app is deployed or hosted locally, will use the corresponding API URL
-// This is set in app.json under the extra key in the expoConfig object
-// For example, in app.json: "extra": { "API_URL": "https://your-production-url.com" }
 const API_URL = Constants.expoConfig?.extra?.API_URL || "http://localhost:5000";
 
 export default function Analytics() {
@@ -72,7 +69,8 @@ export default function Analytics() {
 
             if (response.ok){
                 const data = await response.json();
-                //Formats data returned by routes to display in the app and store it nice
+                // console.log("Top students data:", data);
+
                 const formattedData = data.map((item: any) => ({
                     id: item.id,
                     student_name: item.student_name,
@@ -81,7 +79,9 @@ export default function Analytics() {
                 }))
                 .sort((a: { attendance_count: number, attendance_rate: number }, b: { attendance_count: number, attendance_rate: number }) => {
                     // First, sort by attendance count in descending order
-                    if (a.attendance_count !== b.attendance_count) { return b.attendance_count - a.attendance_count; }
+                    if (a.attendance_count !== b.attendance_count) {
+                        return b.attendance_count - a.attendance_count;
+                    }
                     // If attendance count is tied, sort by attendance rate in descending order
                     return b.attendance_rate - a.attendance_rate;
                 });
@@ -107,6 +107,7 @@ export default function Analytics() {
                 const data = await response.json();
                 setPersonalStats(data);
             }
+            // else { console.error("Failed to fetch personal stats data:", response.statusText); }
         }
         catch(error){ console.error("Error fetching personal stats data:", error); }
         finally{ setIsLoadingAttendanceData(false); }
@@ -147,17 +148,18 @@ export default function Analytics() {
 
             if (response.ok){
                 const data = await response.json();
+                console.log("Student classes data:", data);
                 const simplifiedClasses = data.classes.map((classData: { id: number; class_name: string; }) => ({
                     id: classData.id,
                     class_name: classData.class_name,
                 }));
                 await(fetchStudentRanks(simplifiedClasses));
             }
+            // else { console.error("Failed to fetch student classes data:", response.statusText); }
         }
         catch(error){ console.error("Error fetching student classes data:", error); }
     };
 
-    //Provides automatic updates and refresh of data
     useEffect(() => {
         if (user?.role === "professor") { 
             fetchClassAttendanceData(); 
@@ -231,7 +233,7 @@ export default function Analytics() {
                                 scrollEnabled={false}
                             />
                         </View>
-                        {/* Doesn't work yet but have future feature to export analytics data */}
+                        
                         <TouchableOpacity style={styles.exportButton}>
                             <Text style={styles.exportButtonText}>Export Analytics</Text>
                         </TouchableOpacity>
@@ -241,7 +243,7 @@ export default function Analytics() {
             </View>
         );
     };
-    //Could be one of many milestones, but for now just top 3 in attendance
+
     const milestoneReached = ranks.some(r => r.rank && r.rank <= 3);
 
     const renderStudentView = () => {
@@ -317,7 +319,6 @@ export default function Analytics() {
                                     <Text style={styles.milestoneIconText}>⭐</Text>
                                 </View>
                                 <View style={styles.milestoneInfo}>
-                                    {/* Could have dynamic milestone for month duration but for now 30 days can be hardcoded */}
                                     <Text style={styles.milestoneName}>Perfect Month Goal</Text>
                                     <Text style={styles.milestoneProgress}>{personalStats?.current_streak}/30 days completed</Text>
                                     <View style={styles.milestoneProgressBar}>
@@ -333,8 +334,10 @@ export default function Analytics() {
         );
     };
 
-    // Render the appropriate view based on user role
-    if (user?.role === "professor") { return renderProfessorView(); }
+    if (user?.role === "professor") {
+        return renderProfessorView();
+    }
+
     return renderStudentView();
 }
 

@@ -1,5 +1,5 @@
 import React, { useCallback, useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator, FlatList, TextInput, TouchableOpacity, ScrollView, Image, Modal, Alert } from "react-native";
 import { useUserContext } from "@/context/user";
 import { useNavigation, NavigationProp, useFocusEffect } from "@react-navigation/native";
 import { RootStackParamList } from "@/types/types";
@@ -11,6 +11,21 @@ import Navbar from "@/components/navbar";
 import Constants from "expo-constants";
 
 const API_URL = Constants.expoConfig?.extra?.API_URL || "http://localhost:5000";
+
+// Placeholder data until API routes are implemented
+const MOCK_UPCOMING_SESSIONS = [
+  { id: 1, class_name: "Introduction to Computer Science", time: "10:00 AM", day: "Monday" },
+  { id: 2, class_name: "Mobile App Development", time: "2:30 PM", day: "Wednesday" },
+  { id: 3, class_name: "Data Structures", time: "11:15 AM", day: "Friday" },
+];
+
+const MOCK_ATTENDANCE_SUMMARY = {
+  total_classes: 3,
+  total_sessions: 42,
+  attended_sessions: 38,
+  current_streak: 7,
+  week_progress: 3, // out of 5 days
+};
 
 export default function Home() {
   const { user } = useUserContext();
@@ -49,7 +64,6 @@ export default function Home() {
     current_streak: 0,
     longest_streak: 0,
   });
-
   const [weekProgress, setWeekProgress] = useState<number>(0);
   const [upcomingSessions, setUpcomingSessions] = useState<{ id: number; class_name: string; day: string; time: string; }[]>([]);
   
@@ -97,8 +111,8 @@ export default function Home() {
   
       // Adjust for Monday (1) to Friday (5), clamp anything else to boundaries
       const adjustedProgress =
-        currentDay === 0 ? 0 : // Weekday
-        currentDay > 5 ? 5 :   // Saturday, Sunday
+        currentDay === 0 ? 0 : // Sunday
+        currentDay > 5 ? 5 :   // Saturday
         currentDay;
   
       setWeekProgress(adjustedProgress);
@@ -110,6 +124,7 @@ export default function Home() {
   
         const sessions = studentClasses.map(cls => {
           const startDate = new Date(cls.start_date);
+          const endDate = new Date(cls.end_date);
   
           // Use class start date or today, whichever is later
           const nextDate = today > startDate ? today : startDate;
@@ -206,6 +221,21 @@ export default function Home() {
     catch (error) { console.error('Error fetching classes:', error); }
   };
 
+  //Handle upcoming classes for students
+  // const fetchUpcomingClasses = async () => {
+  //   try {
+  //     const response = await fetch(`${API_URL}/api/user/my-next-sessions`, {
+  //       method: "GET",
+  //       credentials: "include",
+  //     });
+  //     if (response.ok) {
+  //       const data = await response.json();
+  //       setStudentClasses(data);
+  //     }
+  //   } 
+  //   catch (error) { console.log(error); }
+  // };
+
   const handleChompInPress = () => {
     navigation.navigate("scan", { qrCode: "" });
   };
@@ -300,7 +330,7 @@ export default function Home() {
           
           <View style={styles.quickStatsSection}>
             <Text style={styles.sectionTitle}>Your Classes</Text>
-            {/* Class stats */}
+            
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -337,7 +367,7 @@ export default function Home() {
               </TouchableOpacity>
             </ScrollView>
           </View>
-          {/* View analytics of class for professor */}
+          
           <TouchableOpacity
             style={styles.analyticsCard}
             onPress={() => navigation.navigate("analytics")}
@@ -426,7 +456,7 @@ export default function Home() {
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Upcoming Sessions</Text>
             </View>
-            {/* Upcoming class times, maybe add alert or notifications for this later */}
+            
             {upcomingSessions.map(session => (
               <View key={session.id} style={styles.sessionCard}>
                 <View style={styles.sessionTime}>
@@ -464,7 +494,10 @@ export default function Home() {
     );
   };
 
-  if (user?.role === "professor") { return renderProfessorView(); }
+  if (user?.role === "professor") {
+    return renderProfessorView();
+  }
+
   return renderStudentView();
 }
 
@@ -496,6 +529,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: "#333",
   },
+  
   // Welcome card for empty state
   welcomeCard: {
     backgroundColor: "white",
@@ -541,6 +575,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#333",
   },
+  
   // Professor view styles
   headerCard: {
     backgroundColor: "white",
@@ -564,6 +599,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#666",
   },
+  
   qrSection: {
     backgroundColor: "white",
     borderRadius: 16,
@@ -599,9 +635,10 @@ const styles = StyleSheet.create({
   dropdownBox: {
     borderColor: "#ddd",
     borderRadius: 8,
-    backgroundColor: "#fff", 
-    padding: 8, 
+    backgroundColor: "#fff", // Optional: Add a background color for better visibility
+    padding: 8, // Optional: Add padding for better spacing
   },
+  
   qrButton: {
     backgroundColor: "#4FEEAC",
     borderRadius: 8,
@@ -620,6 +657,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#333",
   },
+  
   // Class cards
   quickStatsSection: {
     marginBottom: 16,
@@ -667,6 +705,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#555",
   },
+  
   // Add class card
   addClassCard: {
     backgroundColor: "#f9f9f9",
@@ -689,6 +728,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
   },
+  
   // Analytics card
   analyticsCard: {
     backgroundColor: "white",
@@ -728,6 +768,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
   },
+  
   // Student view styles
   studentHeaderCard: {
     backgroundColor: "white",
@@ -757,6 +798,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
   },
+  
   // Section styles
   section: {
     backgroundColor: "white",
@@ -779,6 +821,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#4FEEAC",
   },
+  
   // Summary grid
   summaryGrid: {
     flexDirection: "row",
@@ -799,6 +842,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
   },
+  
   // Week progress
   weekProgress: {
     flexDirection: "row",
@@ -824,6 +868,7 @@ const styles = StyleSheet.create({
   weekDayTextCompleted: {
     color: "#333",
   },
+  
   // Session cards
   sessionCard: {
     flexDirection: "row",
@@ -871,6 +916,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#888",
   },
+  
   // Legacy styles
   title: {
     fontSize: 24,

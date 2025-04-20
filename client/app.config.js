@@ -39,7 +39,6 @@ export default {
     experiments: {
       typedRoutes: true
     },
-    // Get API URL from Mauricio and put it here
     extra: {
       API_URL: process.env.API_URL,
       PRODUCTION_API_URL: process.env.PRODUCTION_API_URL

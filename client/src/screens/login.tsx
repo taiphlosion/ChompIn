@@ -9,7 +9,10 @@ import Constants from "expo-constants";
 const API_URL = Constants.expoConfig?.extra?.API_URL || "http://localhost:5000";
 
 // Define the navigation prop type for the Login screen
-type loginScreenNavigationProp = StackNavigationProp< RootStackParamList, "login" >;
+type loginScreenNavigationProp = StackNavigationProp<
+  RootStackParamList,
+  "login"
+>;
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -28,7 +31,10 @@ export default function Login() {
       });
       const data = await response.json();
 
-      if (!response.ok) { throw new Error(data.message); }
+      if (!response.ok) {
+        throw new Error(data.message);
+      }
+      console.log("Success:", data);
 
       setUser({
         id: data.user.id,
@@ -37,10 +43,12 @@ export default function Login() {
         last_name: data.user.last_name,
         role: data.user.role,
       });
-    } 
-    catch (error) {
-      if (error instanceof Error) { console.error("Login error:", error.message); } 
-      else { console.error("Login error:", error); }
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error("Login error:", error.message);
+      } else {
+        console.error("Login error:", error);
+      }
     }
   };
 

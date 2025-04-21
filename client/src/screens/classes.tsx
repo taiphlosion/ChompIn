@@ -85,7 +85,6 @@ export default function ClassScreen() {
             });
             if (response.ok) {
                 const data = await response.json();
-                // console.log("API response:", data);
                 setClasses(data);
             }
         } 
@@ -134,7 +133,6 @@ export default function ClassScreen() {
 
             if (response.ok) {
                 const data = await response.json();
-                // console.log("Class created:", data);
                 setClasses((prevClasses) => [...prevClasses, data.classroom]);
                 setClassName("");
                 setSelectedDays([]);
@@ -172,32 +170,13 @@ export default function ClassScreen() {
     };
 
     const getTimeBlockLabel = (timeBlockId: number | null | undefined) => {
-        // console.log("Time Block ID:", timeBlockId);
-        
         // Handle null, undefined, 0, NaN, etc.
         if (!timeBlockId && timeBlockId !== 0) return 'Not set';
         
         const timeBlock = timeBlocks.find(block => parseInt(block.key) === timeBlockId);
         if (timeBlock) { return timeBlock.value; } 
-        else {
-            // console.log("No timeBlock found for ID:", timeBlockId);
-            return `Block ${timeBlockId}`;
-        }
+        else { return `Block ${timeBlockId}`; }
     };
-
-    //   MAYBE HAVE SOMETHING TO DELETE CLASS
-
-    // const enrollInClass = () => {
-    //     // For now, just show a success message
-    //     if (!classCode.trim()) {
-    //         Alert.alert("Error", "Please enter a class code");
-    //         return;
-    //     }
-        
-    //     setEnrollModalVisible(false);
-    //     setClassCode("");
-    //     Alert.alert("Success", "Successfully enrolled in class!");
-    // };
 
     useEffect(() => { 
         if (user?.role === "professor") { classList(); } 
@@ -210,7 +189,6 @@ export default function ClassScreen() {
                     });
                     if (response.ok) {
                         const data = await response.json();
-                        console.log(data);
                         setStudentClasses(data.classes);
                     }
                 } 

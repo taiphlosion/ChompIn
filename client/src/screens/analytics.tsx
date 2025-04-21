@@ -69,7 +69,6 @@ export default function Analytics() {
 
             if (response.ok){
                 const data = await response.json();
-                // console.log("Top students data:", data);
 
                 const formattedData = data.map((item: any) => ({
                     id: item.id,
@@ -148,14 +147,12 @@ export default function Analytics() {
 
             if (response.ok){
                 const data = await response.json();
-                console.log("Student classes data:", data);
                 const simplifiedClasses = data.classes.map((classData: { id: number; class_name: string; }) => ({
                     id: classData.id,
                     class_name: classData.class_name,
                 }));
                 await(fetchStudentRanks(simplifiedClasses));
             }
-            // else { console.error("Failed to fetch student classes data:", response.statusText); }
         }
         catch(error){ console.error("Error fetching student classes data:", error); }
     };

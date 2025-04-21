@@ -103,10 +103,8 @@ export default function Signup() {
                 }),
             });
             const data = await response.json();
-            console.log(role);
 
             if (response.ok) {
-                console.log('Signup success:', data);
                 navigation.reset({
                     index: 0, // The first screen in the stack
                     routes: [{ name: 'login' }], // The route you want to go to (Login screen)

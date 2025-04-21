@@ -221,21 +221,6 @@ export default function Home() {
     catch (error) { console.error('Error fetching classes:', error); }
   };
 
-  //Handle upcoming classes for students
-  // const fetchUpcomingClasses = async () => {
-  //   try {
-  //     const response = await fetch(`${API_URL}/api/user/my-next-sessions`, {
-  //       method: "GET",
-  //       credentials: "include",
-  //     });
-  //     if (response.ok) {
-  //       const data = await response.json();
-  //       setStudentClasses(data);
-  //     }
-  //   } 
-  //   catch (error) { console.log(error); }
-  // };
-
   const handleChompInPress = () => {
     navigation.navigate("scan", { qrCode: "" });
   };

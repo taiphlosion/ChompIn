@@ -1,5 +1,7 @@
 import 'dotenv/config';
 
+const API_URL = "https://chompin.onrender.com";
+
 export default {
   expo: {
     name: "client",
@@ -40,8 +42,7 @@ export default {
       typedRoutes: true
     },
     extra: {
-      API_URL: process.env.API_URL,
-      PRODUCTION_API_URL: process.env.PRODUCTION_API_URL
+      API_URL: API_URL
     }
   }
 };

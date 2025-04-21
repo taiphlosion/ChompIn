@@ -11,7 +11,14 @@ export default {
     icon: "./assets/images/icon.png",
     scheme: "myapp",
     userInterfaceStyle: "automatic",
+    owner: "taiphlosionn",
     newArchEnabled: true,
+    updates: {
+      url: "https://u.expo.dev/a00d6650-4a7d-4627-9b36-f88974dca801"
+    },
+    runtimeVersion: {
+      policy: "appVersion"
+    },
     ios: {
       supportsTablet: true
     },
@@ -42,7 +49,10 @@ export default {
       typedRoutes: true
     },
     extra: {
-      API_URL: API_URL
+      API_URL: API_URL,
+      eas: {
+        projectId: "a00d6650-4a7d-4627-9b36-f88974dca801"
+      }
     }
   }
 };

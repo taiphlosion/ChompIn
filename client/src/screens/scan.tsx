@@ -65,7 +65,7 @@ export default function CameraScreen() {
 
         // API Call: /api/user/mark-attendance to mark attendance for student
         try {
-            const url = new URL(`http://placeholder.com/${data.split('undefined/')[1]}`);
+            const url = new URL(data);
             const sessionId = url.searchParams.get('session');
 
             if (!sessionId) { 
